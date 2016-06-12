@@ -10,6 +10,7 @@
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
 #include <QDebug>
+#include <map>
 
 #define GO_BOARD_SIZE 1200
 #define GO_GRID_SIZE 1000
@@ -22,8 +23,34 @@ public:
     GoBoard(QWidget *parent);
     void drawBoard();
     QPoint alphaNumToPos(QString alphanum);
+    void placeStone(QString location, QString color);
+    void removeStone(QString location);
+    bool hasStone(QString location);
+    void clearBoard();
 
     //vars
+    enum StoneColors {
+        Black,
+        White,
+        Blank
+    };
+
+    struct Stone {
+        QGraphicsPixmapItem* stone;
+        StoneColors color;
+        void setColor(QString c){
+            c = c.trimmed().toLower();
+            if(c == "white"){
+                color = White;
+            }else if( c=="black"){
+                color = Black;
+            }else{
+                color = Blank;
+            }
+        }
+    };
+
+    std::map<QString, Stone> stoneHouse;
     int boardSize = 19;
     int gridSizePixels = 0;
     QBrush bgBrush;

@@ -14,9 +14,11 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    goboard.cpp
+    goboard.cpp \
+    gtpengineprocess.cpp
 
 HEADERS  += mainwindow.h \
-    goboard.h
+    goboard.h \
+    gtpengineprocess.h
 
 FORMS    += mainwindow.ui

@@ -16,16 +16,25 @@ MainWindow::~MainWindow()
 void MainWindow::on_buttonHint_clicked()
 {
 
+    ui->gameBoard->placeStone("f10", "black");
+    engine.write("help\n");
 }
 
 void MainWindow::on_buttonPass_clicked()
 {
-
+    ui->gameBoard->placeStone("g10", "white");
+    engine.write("quit\n");
 }
 
 void MainWindow::on_buttonResign_clicked()
 {
+    //ui->gameBoard->removeStone("f10");
+    ui->gameBoard->clearBoard();
 
+    // /usr/local/gnugo/bin/gnugo --mode gtp --level 1  --depth 1
+    engine.setProgramPath("/usr/local/gnugo/bin/gnugo");
+    engine.addProgramArg("--mode gtp");
+    engine.start();
 }
 
 void MainWindow::on_actionNew_Game_triggered()
