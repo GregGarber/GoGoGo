@@ -73,7 +73,7 @@ QPoint GoBoard::alphaNumToPos(QString alphanum){
          number = match.captured("number");
          letter = match.captured("letter");
          qDebug() <<"number:"<<number<<" letter: "<<letter;
-         y = number.toInt();
+         y = boardSize - number.toInt()+1;
          x = letter.at(0).toUpper().toLatin1() - 64;
          // looks like the letter I isn't supposed to be used... confusion with number 1?
          if(x > 8){

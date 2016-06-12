@@ -6,6 +6,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    connect(&engine, SIGNAL(gtpResponse(QString,QString,bool)), this, SLOT(processGtpResponse(QString,QString,bool)));
 }
 
 MainWindow::~MainWindow()
@@ -13,11 +14,52 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::processGtpResponse(QString response, QString command, bool success){
+    qDebug() << "MainWindow: Com:"<< command << " Resp:" << response << " success:" << success;
+    QString html =QString("<i>%1</i><b> %2</b>").arg(command).arg(response);
+     ui->textHistory->appendHtml(html);
+     //ui->textHistory->appendHtml(html.toHtmlEscaped());
+     //play white b4 or genmove white
+     if(success){
+         if( command.contains("play", Qt::CaseInsensitive) && response=="" ){
+                     QRegularExpression re("^(?<play>\\w+)\\s+(?<color>\\w+)\\s+(?<location>\\w\\s?\\d\\d?)");
+                     QRegularExpressionMatch match = re.match(command);
+                     if (match.hasMatch()) {
+                         QString color = match.captured("color");
+                         QString location = match.captured("location");
+                         ui->gameBoard->placeStone(location, color);
+                     }
+         }else if(command.contains("genmove", Qt::CaseInsensitive)){
+                     QRegularExpression re("^(?<play>\\w+)\\s+(?<color>\\w+)");
+                     QRegularExpressionMatch match = re.match(command);
+                     if (match.hasMatch()) {
+                         QString color = match.captured("color");
+                         ui->gameBoard->placeStone(response, color);
+                         if(response != "pass" && response != "resign"){
+                         if(color == "white"){
+                             engine.write("genmove black");
+                         }else{
+                             engine.write("genmove white");
+                         }
+                         }
+                     }
+
+         }
+     }
+
+}
+
 void MainWindow::on_buttonHint_clicked()
 {
 
     ui->gameBoard->placeStone("f10", "black");
     engine.write("help\n");
+    QByteArray ba;
+    for(int i=0;i<10;i++){
+        ba = "echo ";
+        ba.append( QString("%1\n").arg(i));
+        engine.write(ba);
+    }
 }
 
 void MainWindow::on_buttonPass_clicked()
@@ -120,4 +162,14 @@ void MainWindow::on_actionAbout_triggered()
 void MainWindow::on_actionHistory_toggled(bool arg1)
 {
 
+}
+
+void MainWindow::on_lineCommand_returnPressed()
+{
+    if( engine.is_running ){
+        engine.write( QByteArray( ui->lineCommand->text().toLatin1() ));
+        ui->lineCommand->clear();
+    }else{
+        ui->textHistory->appendHtml("<b>GNU Go Engine Not Running</b>");
+    }
 }

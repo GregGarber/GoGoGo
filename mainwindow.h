@@ -17,6 +17,9 @@ public:
     ~MainWindow();
     GTPEngineProcess engine;
 
+public slots:
+    void processGtpResponse(QString response, QString command, bool success);
+
 private slots:
     void on_buttonHint_clicked();
 
@@ -57,6 +60,8 @@ private slots:
     void on_actionAbout_triggered();
 
     void on_actionHistory_toggled(bool arg1);
+
+    void on_lineCommand_returnPressed();
 
 private:
     Ui::MainWindow *ui;
