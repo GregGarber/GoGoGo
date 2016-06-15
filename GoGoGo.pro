@@ -22,3 +22,9 @@ HEADERS  += mainwindow.h \
     gtpengineprocess.h
 
 FORMS    += mainwindow.ui
+
+RESOURCES += \
+    resources.qrc
+
+DISTFILES += \
+    stylesheet.css

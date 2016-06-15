@@ -23,12 +23,14 @@ public:
     GoBoard(QWidget *parent);
     void drawBoard();
     QPoint alphaNumToPos(QString alphanum);
+    QString posToAlphaNum(QPointF point);
     void placeStone(QString location, QString color);
     void removeStone(QString location);
     bool hasStone(QString location);
     void clearBoard();
 
     //vars
+    QCursor cursor;
     enum StoneColors {
         Black,
         White,
@@ -57,14 +59,21 @@ public:
     QGraphicsScene* scene;
     QGraphicsTextItem *text;
     QPixmap blackStonePM;
+    QPixmap blackStoneCursorPM;
     QPixmap whiteStonePM;
     QPixmap backgroundPM;
     QGraphicsPixmapItem* boardBackground;
     QGraphicsPixmapItem* whiteStone;
     QGraphicsPixmapItem* blackStone;
+signals:
+    void boardLeftClicked(QString colour, QString vertex);
+
 protected:
     //virtual void	resizeEvent(QResizeEvent *event);
     void	resizeEvent(QResizeEvent *event);
+    void mouseMoveEvent(QMouseEvent *e);
+    void mouseReleaseEvent(QMouseEvent *e);
+
 };
 
 #endif // GOBOARD_H

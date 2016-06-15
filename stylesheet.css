@@ -1,0 +1,13 @@
+/*
+brown #785229;
+darkgreen #023800;
+darkyellow #fbc857;
+*/
+* {
+        background: #023800;
+        color: #fbc857;
+        }
+
+.QLineEdit, .QPlainTextEdit {
+        background: #785229;
+}

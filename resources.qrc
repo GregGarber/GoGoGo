@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/home/g/prog/GoGoGo">
+        <file>images/BlackStone.png</file>
+        <file>images/Logo_16x16.png</file>
+        <file>images/Logo_32x32.png</file>
+        <file>images/Logo_64x64.png</file>
+        <file>images/Logo_128x128.png</file>
+        <file>images/WhiteStone.png</file>
+        <file>images/WoodBoard1.png</file>
+        <file>stylesheet.css</file>
+    </qresource>
+</RCC>

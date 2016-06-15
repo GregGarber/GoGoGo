@@ -1,9 +1,11 @@
 #include "goboard.h"
 #include<QtGlobal>
+#include <QGraphicsSceneMoveEvent>
 
 GoBoard::GoBoard(QWidget *parent = 0) : QGraphicsView(parent)
 {
     scene = new QGraphicsScene(-GO_BORDER_SIZE, -GO_BORDER_SIZE, GO_BOARD_SIZE, GO_BOARD_SIZE,this);
+    //connect(scene,SIGNAL())
     setScene(scene);
 
     gridSizePixels = GO_GRID_SIZE / boardSize;
@@ -13,21 +15,61 @@ GoBoard::GoBoard(QWidget *parent = 0) : QGraphicsView(parent)
     backgroundPM = QPixmap("WoodBoard1.png");
     whiteStonePM = QPixmap("WhiteStone.png");
     blackStonePM = QPixmap("BlackStone.png");
+    blackStoneCursorPM = QPixmap("BlackStoneCursor.png");
+    cursor = QCursor(blackStoneCursorPM);
+    this->setCursor(cursor);
 
     bgBrush = scene->backgroundBrush();
     bgBrush.setTexture(backgroundPM);
     scene->setBackgroundBrush(bgBrush);
 
+}
+
+void GoBoard::mouseMoveEvent(QMouseEvent *e){
     /*
-    whiteStone = scene->addPixmap(whiteStonePM);
-    blackStone = scene->addPixmap(blackStonePM);
-    whiteStone->setFlag(QGraphicsItem::ItemIsMovable);
-    blackStone->setFlag(QGraphicsItem::ItemIsMovable);
+    QPoint global=e->globalPos();
+    QPointF sc = this->mapToScene(global);
+    int x,y;
 
-    whiteStone->setPos(alphaNumToPos("A1"));
-    blackStone->setPos(alphaNumToPos("B 2"));
+    x=gridSizePixels * ((int)( sc.rx()/gridSizePixels))*(GO_BOARD_SIZE/this->width());
+    y=-100;
+    x=100;
+    global.setX(x);
+    global.setY(x);
+    global = mapFromScene(sc);
+    global = mapToGlobal(global);
     */
+    //not understanding this at all
+    //cursor.setPos(global.rx(),global.rx());
+    /*
+    QPointF local = e->localPos();
+    qDebug() << "Local (x,y) (" <<local.rx()<<", "<<local.ry()<<")"<< (int)( local.ry()/gridSizePixels);
+    qDebug() << "Global (x,y) (" <<global.rx()<<", "<<global.ry()<<")"<< (int)( global.ry()/gridSizePixels);
+    qDebug() << " type: " << e->GraphicsSceneHoverEnter;
+    qDebug() << "Scene (x,y) (" <<sc.rx()<<", "<<sc.ry()<<")";
+    qDebug() << QChar(65+((int)( sc.rx()/gridSizePixels)))<<" " << 19-((int)( sc.ry()/gridSizePixels)-6);
+    */
+    //qDebug() << posToAlphaNum(sc);
+    QGraphicsView::mouseMoveEvent(e);
+}
 
+void GoBoard::mouseReleaseEvent(QMouseEvent *e){
+    QPointF sc = this->mapToScene(e->pos());
+    emit boardLeftClicked("black", posToAlphaNum(sc));
+    QGraphicsView::mouseReleaseEvent(e);
+}
+
+QString GoBoard::posToAlphaNum(QPointF point){
+    int i,j;
+    QString ret;
+    i = ((int)( point.rx()/gridSizePixels));
+    j = 19-((int)( point.ry()/gridSizePixels));
+    if(i > 7){
+        i++;
+    }
+    ret = QString("%1%2").arg(QChar(65+i)).arg(j);
+    //qDebug() << "posToAlphaNum i:"<<i<<" j:"<<j<< " ret:"<<ret;
+    return ret;
 }
 
 void GoBoard::drawBoard(){
@@ -103,6 +145,10 @@ void GoBoard::placeStone(QString location, QString color){
     }else if( stone.color == White){
         new_stone = scene->addPixmap(whiteStonePM);
     }
+    new_stone->setToolTip(QString("Pos: %1\nColour: %2\nOrder: %3")
+                          .arg(location.toUpper() )
+                          .arg(color.at(0).toUpper()+color.mid(1))
+                          .arg(( (uint)stoneHouse.size() +1) ) );
     if(stone.color != Blank){
         new_stone->setScale( ((qreal)gridSizePixels/(qreal)new_stone->boundingRect().width() ));
         new_stone->setFlag(QGraphicsItem::ItemIsMovable);

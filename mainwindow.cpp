@@ -7,80 +7,129 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(&engine, SIGNAL(gtpResponse(QString,QString,bool)), this, SLOT(processGtpResponse(QString,QString,bool)));
-}
+    connect(ui->gameBoard, SIGNAL(boardLeftClicked(QString,QString)),this,SLOT(doPlay(QString,QString)));
 
-MainWindow::~MainWindow()
-{
-    delete ui;
-}
-
-void MainWindow::processGtpResponse(QString response, QString command, bool success){
-    qDebug() << "MainWindow: Com:"<< command << " Resp:" << response << " success:" << success;
-    QString html =QString("<i>%1</i><b> %2</b>").arg(command).arg(response);
-     ui->textHistory->appendHtml(html);
-     //ui->textHistory->appendHtml(html.toHtmlEscaped());
-     //play white b4 or genmove white
-     if(success){
-         if( command.contains("play", Qt::CaseInsensitive) && response=="" ){
-                     QRegularExpression re("^(?<play>\\w+)\\s+(?<color>\\w+)\\s+(?<location>\\w\\s?\\d\\d?)");
-                     QRegularExpressionMatch match = re.match(command);
-                     if (match.hasMatch()) {
-                         QString color = match.captured("color");
-                         QString location = match.captured("location");
-                         ui->gameBoard->placeStone(location, color);
-                     }
-         }else if(command.contains("genmove", Qt::CaseInsensitive)){
-                     QRegularExpression re("^(?<play>\\w+)\\s+(?<color>\\w+)");
-                     QRegularExpressionMatch match = re.match(command);
-                     if (match.hasMatch()) {
-                         QString color = match.captured("color");
-                         ui->gameBoard->placeStone(response, color);
-                         if(response != "pass" && response != "resign"){
-                         if(color == "white"){
-                             engine.write("genmove black");
-                         }else{
-                             engine.write("genmove white");
-                         }
-                         }
-                     }
-
-         }
-     }
-
-}
-
-void MainWindow::on_buttonHint_clicked()
-{
-
-    ui->gameBoard->placeStone("f10", "black");
-    engine.write("help\n");
-    QByteArray ba;
-    for(int i=0;i<10;i++){
-        ba = "echo ";
-        ba.append( QString("%1\n").arg(i));
-        engine.write(ba);
-    }
-}
-
-void MainWindow::on_buttonPass_clicked()
-{
-    ui->gameBoard->placeStone("g10", "white");
-    engine.write("quit\n");
-}
-
-void MainWindow::on_buttonResign_clicked()
-{
-    //ui->gameBoard->removeStone("f10");
-    ui->gameBoard->clearBoard();
-
-    // /usr/local/gnugo/bin/gnugo --mode gtp --level 1  --depth 1
     engine.setProgramPath("/usr/local/gnugo/bin/gnugo");
     engine.addProgramArg("--mode gtp");
     engine.start();
 }
 
+MainWindow::~MainWindow()
+{
+    if(engine.is_running) engine.stop();
+    delete ui;
+}
+
+void MainWindow::genmove(QString colour, QString vertex){
+    qDebug() << "PLAY METHOD: colour: "<<colour<<" vertex:"<< vertex;
+    ui->gameBoard->placeStone(vertex, colour);
+}
+void MainWindow::play(QString colour, QString vertex){
+    qDebug() << "PLAY METHOD: colour: "<<colour<<" vertex:"<< vertex;
+    ui->gameBoard->placeStone(vertex, colour);
+    engine.write("genmove white");
+}
+void MainWindow::doPlay(QString colour, QString vertex){
+    qDebug() << "Do PLAY METHOD: colour: "<<colour<<" vertex:"<< vertex;
+    QByteArray cmd;
+    cmd.append("play ");
+    cmd.append(colour);
+    cmd.append(" ");
+    cmd.append(vertex);
+    engine.write(cmd);
+}
+
+void MainWindow::processGtpResponse(QString response, QString command, bool success){
+    const void* value = nullptr;
+    const void* vertex = nullptr;
+    const void* response_vertex = nullptr;
+    const void* verticies = nullptr;
+
+    ui->textHistory->appendPlainText(QString("%1 %2 %3\n").arg(command).arg(response).arg(success));
+    QString value_str, vertex_str, response_vertex_str;
+    QStringList verticies_list;
+    QRegularExpression re(commonREs.value("cmd"));
+    QRegularExpressionMatch match = re.match(command);
+    QString cmd, cmd_re;
+    if (match.hasMatch()) {
+        cmd = match.captured("cmd");
+        cmd_re = CommandREs.value(cmd).cmd_re; // play black b4
+    //    qDebug()<< "cmd: "<<cmd<<" cmd_re: "<<cmd_re << " re:" << commonREs.value(cmd_re);
+        QRegularExpression cmd_regex( commonREs.value(cmd_re));
+        QRegularExpressionMatch cmd_match = cmd_regex.match(command);
+     //   qDebug() << "response re: "<<commonREs.value(CommandREs.value(cmd).response_re);
+        QRegularExpression response_regex( commonREs.value(CommandREs.value(cmd).response_re));
+        if(CommandREs.value(cmd).response_re == "verticies"){
+            QRegularExpressionMatchIterator i = response_regex.globalMatch(response);
+            while (i.hasNext()) {
+                QRegularExpressionMatch match = i.next();
+                QString word = match.captured(1);
+                qDebug()<<"MATCH: "<<word;
+                //words << word;
+            }
+        }else{
+            QRegularExpressionMatch response_match = response_regex.match(response);
+            if(response_match.hasMatch()){
+                response_vertex_str = response_match.captured("vertex");//any point to this?
+            }
+        }
+
+        if(cmd_match.hasMatch()){
+            value_str = cmd_match.captured("value");
+            vertex_str = cmd_match.captured("vertex");
+            verticies_list = cmd_match.capturedTexts(); //??????
+            value = &value_str;
+            vertex = &vertex_str;
+            response_vertex = &response_vertex_str;
+            verticies = &verticies_list;
+            //qDebug() << "REGX: value_str: "<<value_str<<" vertex_str:" << vertex_str;
+            //qDebug() << "REGX: value: "<<value<<" vertex:" << vertex;
+
+            if(cmd_re == "cmd_str_vertex"){
+                QMetaObject::invokeMethod(this,cmd.toLatin1().data(),
+                                          QGenericArgument("QString", value),
+                                          QGenericArgument("QString", vertex)
+                                          );
+            }else if(cmd_re == "cmd_str"){
+                QMetaObject::invokeMethod(this,cmd.toLatin1().data(),
+                                          QGenericArgument("QString", value),
+                                          QGenericArgument("QString", response_vertex)
+                                          );
+            }
+        }
+
+    }
+    /*
+        if(ui->actionAutoplay->isChecked()){
+            if(response != "pass" && response != "resign"){
+            if(color == "white"){
+                engine.write("genmove black");
+            }else{
+                engine.write("genmove white");
+            }
+    */
+}
+
+void MainWindow::on_buttonHint_clicked()
+{
+    engine.write("top_moves_black");
+}
+
+void MainWindow::on_buttonPass_clicked()
+{
+}
+
+void MainWindow::on_buttonResign_clicked()
+{
+}
+
 void MainWindow::on_actionNew_Game_triggered()
 {
+    if(!engine.is_running){
+        engine.start();
+    }
+    engine.write("clearboard");
+    ui->gameBoard->clearBoard();
 
 }
 
@@ -101,7 +150,10 @@ void MainWindow::on_actionOpen_triggered()
 
 void MainWindow::on_actionQuit_triggered()
 {
-
+    if(engine.is_running){
+        engine.stop();
+    }
+    QApplication::quit();
 }
 
 void MainWindow::on_actionOpen_Recent_triggered()
@@ -151,6 +203,7 @@ void MainWindow::on_actionHistory_triggered()
 
 void MainWindow::on_actionToolbar_toggled(bool arg1)
 {
+qDebug() << "on_actionToolbar_toggled:" << arg1;
 
 }
 
@@ -161,7 +214,7 @@ void MainWindow::on_actionAbout_triggered()
 
 void MainWindow::on_actionHistory_toggled(bool arg1)
 {
-
+qDebug() << "on_actionHistory_toggled:" << arg1;
 }
 
 void MainWindow::on_lineCommand_returnPressed()
@@ -172,4 +225,30 @@ void MainWindow::on_lineCommand_returnPressed()
     }else{
         ui->textHistory->appendHtml("<b>GNU Go Engine Not Running</b>");
     }
+}
+
+void MainWindow::on_actionAutoplay_triggered()
+{
+    if( engine.is_running ){
+        engine.write("genmove black");
+    }
+}
+
+void MainWindow::on_gameBoard_customContextMenuRequested(const QPoint &pos)
+{
+    /* The gameBoard may not be the right thing to attach the menu to since it might
+     * prevent the scene and graphic items from having context menus which is probably
+     * what I really want.
+     * Also, once menu is opened, a left click on the board crashes the program, whether
+     * I delete rightClickItem or not.
+    qDebug()<<"context menu requested";
+    QMenu submenu;
+    QPoint item = ui->gameBoard->mapToGlobal(pos);
+    submenu.addAction("Add");
+    submenu.addAction("Delete");
+    QAction* rightClickItem = submenu.exec(item);
+    qDebug() << "context menu item "<< rightClickItem->text()<< " clicked";
+    delete rightClickItem;
+
+*/
 }
