@@ -35,15 +35,20 @@ public:
         QString response_re;
     };
     QMap<QString, CommandStuct> CommandREs = {
-    {"play", {  "cmd_str_vertex", "verticies"} },
-    {"genmove", {  "cmd_str", "vertex"} }
+            {"play", {  "cmd_str_vertex", ""} },
+            {"genmove", {  "cmd_str", "vertex"} },
+            {"list_stones", {  "cmd_str", "verticies"} },
+            {"top_moves_black", {"cmd","verticies"}}
     };
 
 public slots:
-    void processGtpResponse(QString response, QString command, bool success);
-    void play(QString colour, QString vertex);
     void doPlay(QString colour, QString vertex);
+    void processGtpResponse(QString response, QString command, bool success);
+    //functions that process responses to respective commands
+    void play(QString colour, QString vertex);
     void genmove(QString colour, QString vertex);
+    void list_stones(QString colour, QStringList verticies);
+    void top_moves_black(QStringList verticies);
 
 private slots:
     void on_buttonHint_clicked();

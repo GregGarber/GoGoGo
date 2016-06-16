@@ -19,16 +19,6 @@ MainWindow::~MainWindow()
     if(engine.is_running) engine.stop();
     delete ui;
 }
-
-void MainWindow::genmove(QString colour, QString vertex){
-    qDebug() << "PLAY METHOD: colour: "<<colour<<" vertex:"<< vertex;
-    ui->gameBoard->placeStone(vertex, colour);
-}
-void MainWindow::play(QString colour, QString vertex){
-    qDebug() << "PLAY METHOD: colour: "<<colour<<" vertex:"<< vertex;
-    ui->gameBoard->placeStone(vertex, colour);
-    engine.write("genmove white");
-}
 void MainWindow::doPlay(QString colour, QString vertex){
     qDebug() << "Do PLAY METHOD: colour: "<<colour<<" vertex:"<< vertex;
     QByteArray cmd;
@@ -37,6 +27,9 @@ void MainWindow::doPlay(QString colour, QString vertex){
     cmd.append(" ");
     cmd.append(vertex);
     engine.write(cmd);
+    engine.write("genmove white");
+    engine.write("list_stones white");
+    engine.write("list_stones black");
 }
 
 void MainWindow::processGtpResponse(QString response, QString command, bool success){
@@ -64,9 +57,10 @@ void MainWindow::processGtpResponse(QString response, QString command, bool succ
             while (i.hasNext()) {
                 QRegularExpressionMatch match = i.next();
                 QString word = match.captured(1);
-                qDebug()<<"MATCH: "<<word;
-                //words << word;
+                //qDebug()<<"MATCH: "<<word;
+                verticies_list.append(word);
             }
+            //qDebug() << "matches:"<<verticies_list;
         }else{
             QRegularExpressionMatch response_match = response_regex.match(response);
             if(response_match.hasMatch()){
@@ -74,10 +68,11 @@ void MainWindow::processGtpResponse(QString response, QString command, bool succ
             }
         }
 
+        QString response_re = CommandREs.value(cmd).response_re;
         if(cmd_match.hasMatch()){
             value_str = cmd_match.captured("value");
             vertex_str = cmd_match.captured("vertex");
-            verticies_list = cmd_match.capturedTexts(); //??????
+            //verticies_list = cmd_match.capturedTexts(); //??????
             value = &value_str;
             vertex = &vertex_str;
             response_vertex = &response_vertex_str;
@@ -85,16 +80,30 @@ void MainWindow::processGtpResponse(QString response, QString command, bool succ
             //qDebug() << "REGX: value_str: "<<value_str<<" vertex_str:" << vertex_str;
             //qDebug() << "REGX: value: "<<value<<" vertex:" << vertex;
 
-            if(cmd_re == "cmd_str_vertex"){
+            if(cmd_re == "cmd_str_vertex" && response_re ==""){
                 QMetaObject::invokeMethod(this,cmd.toLatin1().data(),
                                           QGenericArgument("QString", value),
                                           QGenericArgument("QString", vertex)
                                           );
-            }else if(cmd_re == "cmd_str"){
+            }else if(cmd_re == "cmd_str" && response_re ==""){
+                QMetaObject::invokeMethod(this,cmd.toLatin1().data(),
+                                          QGenericArgument("QString", value)
+                                          );
+            }else if(cmd_re == "cmd_str" && response_re =="vertex"){
                 QMetaObject::invokeMethod(this,cmd.toLatin1().data(),
                                           QGenericArgument("QString", value),
                                           QGenericArgument("QString", response_vertex)
                                           );
+            }else if(cmd_re == "cmd_str" && response_re =="verticies"){
+                QMetaObject::invokeMethod(this,cmd.toLatin1().data(),
+                                          QGenericArgument("QString", value),
+                                          QGenericArgument("QStringList",  verticies)
+                                          );
+            }else if(cmd_re == "cmd" && response_re =="verticies"){
+                QMetaObject::invokeMethod(this,cmd.toLatin1().data(),
+                                          QGenericArgument("QStringList",  verticies)
+                                          );
+            }
             }
         }
 
@@ -108,6 +117,24 @@ void MainWindow::processGtpResponse(QString response, QString command, bool succ
                 engine.write("genmove white");
             }
     */
+
+void MainWindow::top_moves_black(QStringList verticies){
+    ui->gameBoard->showTopMoves("black", verticies);
+}
+
+void MainWindow::list_stones(QString colour, QStringList verticies){
+    qDebug() << "list_stones... colour:" << colour <<" verticies:" <<verticies;
+    ui->gameBoard->checkStones(colour, verticies);
+}
+
+void MainWindow::genmove(QString colour, QString vertex){
+    qDebug() << "PLAY METHOD: colour: "<<colour<<" vertex:"<< vertex;
+    ui->gameBoard->placeStone(vertex, colour);
+}
+void MainWindow::play(QString colour, QString vertex){
+    qDebug() << "PLAY METHOD: colour: "<<colour<<" vertex:"<< vertex;
+    ui->gameBoard->removeMarkers("black_hints");
+    ui->gameBoard->placeStone(vertex, colour);
 }
 
 void MainWindow::on_buttonHint_clicked()

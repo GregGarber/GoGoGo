@@ -26,8 +26,13 @@ public:
     QString posToAlphaNum(QPointF point);
     void placeStone(QString location, QString color);
     void removeStone(QString location);
+    void checkStones(QString colour, QStringList verticies);
+    void showTopMoves(QString colour, QStringList verticies);
     bool hasStone(QString location);
     void clearBoard();
+    void removeMarkers(QString name);
+    //QMap<QString,QGraphicsObject*> markers;
+    QMap<QString, QGraphicsItemGroup*> markers;
 
     //vars
     QCursor cursor;
@@ -35,6 +40,10 @@ public:
         Black,
         White,
         Blank
+    };
+    enum StoneData {
+        STONE_DATA_COLOUR,
+        STONE_DATA_VERTEX
     };
 
     struct Stone {
@@ -50,9 +59,16 @@ public:
                 color = Blank;
             }
         }
+        QString getColorText(StoneColors c ){
+            if(c == Black ) return "black";
+            if(c == Blank ) return "blank";
+            if(c == White ) return "white";
+        }
+        QString getStoneColor(){ return getColorText(color); }
     };
 
-    std::map<QString, Stone> stoneHouse;
+    //std::map<QString, Stone> stoneHouse;
+    QMap<QString, Stone> stoneHouse;
     int boardSize = 19;
     int gridSizePixels = 0;
     QBrush bgBrush;
@@ -69,7 +85,6 @@ signals:
     void boardLeftClicked(QString colour, QString vertex);
 
 protected:
-    //virtual void	resizeEvent(QResizeEvent *event);
     void	resizeEvent(QResizeEvent *event);
     void mouseMoveEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);

@@ -26,31 +26,61 @@ GoBoard::GoBoard(QWidget *parent = 0) : QGraphicsView(parent)
 }
 
 void GoBoard::mouseMoveEvent(QMouseEvent *e){
-    /*
-    QPoint global=e->globalPos();
-    QPointF sc = this->mapToScene(global);
-    int x,y;
-
-    x=gridSizePixels * ((int)( sc.rx()/gridSizePixels))*(GO_BOARD_SIZE/this->width());
-    y=-100;
-    x=100;
-    global.setX(x);
-    global.setY(x);
-    global = mapFromScene(sc);
-    global = mapToGlobal(global);
-    */
-    //not understanding this at all
-    //cursor.setPos(global.rx(),global.rx());
-    /*
+    /* meh
+    static int cnt=0;
+    cnt++;
+    if(cnt % 2 == 0){
+        qDebug() <<" cnt:"<<cnt;
+        */
+    static QPoint last_loc = cursor.pos();
+    QPoint global, tmp,offset;
+    global = cursor.pos();//int
+    tmp = global - last_loc;
+    qDebug() << "Man: " <<tmp.manhattanLength();
+    if(tmp.manhattanLength() > 0 ) { last_loc = global; return;}
+    QPointF sc;
     QPointF local = e->localPos();
-    qDebug() << "Local (x,y) (" <<local.rx()<<", "<<local.ry()<<")"<< (int)( local.ry()/gridSizePixels);
-    qDebug() << "Global (x,y) (" <<global.rx()<<", "<<global.ry()<<")"<< (int)( global.ry()/gridSizePixels);
-    qDebug() << " type: " << e->GraphicsSceneHoverEnter;
-    qDebug() << "Scene (x,y) (" <<sc.rx()<<", "<<sc.ry()<<")";
-    qDebug() << QChar(65+((int)( sc.rx()/gridSizePixels)))<<" " << 19-((int)( sc.ry()/gridSizePixels)-6);
-    */
-    //qDebug() << posToAlphaNum(sc);
+    tmp.setX((int)local.rx());
+    tmp.setY((int)local.ry());
+    QPointF s = mapToScene(tmp );
+    sc = e->screenPos();//floaty
+    offset = global - tmp;
+    qDebug() << "Global (x,y) (" <<global.rx()<<", "<<global.ry()<<")";
+    qDebug() << "Screen (x,y) (" <<sc.rx()<<", "<<sc.ry()<<")";
+    qDebug() << "Offset(x,y) (" <<offset.rx()<<", "<<offset.ry()<<")";
+    qDebug() << "Local(x,y) (" <<local.rx()<<", "<<local.ry()<<")";
+    qDebug() << "Scene(x,y) (" <<s.rx()<<", "<<s.ry()<<")";
+    qreal i = gridSizePixels * (int)round((qreal)( s.rx()/(qreal)gridSizePixels));
+    qreal j = gridSizePixels * (int)round((qreal)( s.ry()/(qreal)gridSizePixels));
+    QPointF new_point(i,j);
+    QPoint loc = mapFromScene(new_point);
+    //cursor.setPos(global);
     QGraphicsView::mouseMoveEvent(e);
+    loc = loc + offset;
+    cursor.setPos( loc);
+    last_loc = global;
+    /*
+    if( loc.rx() > global.rx()) global.setX( global.rx() + 1);
+    if( loc.rx() < global.rx()) global.setX( global.rx() - 1);
+    if( loc.ry() > global.ry()) global.setY( global.ry() + 1);
+    if( loc.ry() < global.ry()) global.setY( global.ry() - 1);
+    cursor.setPos(global);
+    */
+    /*
+    if( abs(global.rx()-loc.rx()) < 5 ) global.setX( (loc.rx()+(8.0*global.rx()))/9.0 );
+    if( abs(global.ry()-loc.ry()) < 5 ) global.setY( (loc.ry()+(8.0*global.ry()))/9.0 );
+    cursor.setPos(global);
+    */
+    /*
+    int x,y;
+    x=abs(global.rx()-loc.rx()) ;
+    y=abs(global.ry()-loc.ry()) ;
+    global.setX( (loc.rx()+(x*global.rx()))/(1.0+x) );
+    global.setY( (loc.ry()+(y*global.ry()))/(1.0 +y) );
+    cursor.setPos(global);
+    */
+
+//}
 }
 
 void GoBoard::mouseReleaseEvent(QMouseEvent *e){
@@ -62,8 +92,8 @@ void GoBoard::mouseReleaseEvent(QMouseEvent *e){
 QString GoBoard::posToAlphaNum(QPointF point){
     int i,j;
     QString ret;
-    i = ((int)( point.rx()/gridSizePixels));
-    j = 19-((int)( point.ry()/gridSizePixels));
+    i = (int)round((qreal)( point.rx()/(qreal)gridSizePixels));
+    j = 19-(int)round((qreal)( point.ry()/(qreal)gridSizePixels));
     if(i > 7){
         i++;
     }
@@ -71,6 +101,60 @@ QString GoBoard::posToAlphaNum(QPointF point){
     //qDebug() << "posToAlphaNum i:"<<i<<" j:"<<j<< " ret:"<<ret;
     return ret;
 }
+
+void GoBoard::checkStones(QString colour, QStringList verticies){
+   foreach (const QString &str, stoneHouse.keys()){
+       if(stoneHouse[str].getStoneColor() == colour){
+           if( !verticies.contains(str)) {
+               qDebug() << "REMOVE STONE: "<< colour << " " << str;
+               removeStone(str);
+           }
+       }
+   }
+   foreach(const QString &str, verticies){
+       if(!stoneHouse.contains(str)){
+           placeStone(str, colour);
+           qDebug() << "Add Missing STONE: "<< colour << " " << str;
+       }else{
+           if(stoneHouse[str].getStoneColor() != colour){
+           qDebug() << "FIX miscoloured STONE: "<< colour << " " << str;
+               removeStone(str);
+               placeStone(str, colour);
+           }
+       }
+   }
+}
+
+void GoBoard::showTopMoves(QString colour, QStringList verticies){
+    QPoint pt;
+    QPen pen(QColor(Qt::GlobalColor::red));
+    QGraphicsItemGroup *gig = new QGraphicsItemGroup(boardBackground);
+    //QBrush brush(QColor(Qt::GlobalColor::black));
+                 pen.setWidth(10);
+    QFont font =QFont("Arial", 25, 9 );
+    for(int i=0; i<verticies.length(); i+=2){//every other is a score
+    QBrush brush(QColor(255,255,0,(3*verticies[i+1].toInt())));
+        pt = alphaNumToPos(verticies[i]);
+        QGraphicsEllipseItem *el = scene->addEllipse( (qreal)pt.rx(), (qreal) pt.ry(), 50.0,50.0,pen,brush);
+        QString strength = QString("%1").arg(verticies[i+1]);
+        el->setToolTip(strength);
+        QGraphicsTextItem *tx = scene->addText(strength,font);
+    //    tx->setDefaultTextColor(Qt::red);
+        ///tx->setPos((qreal)pt.rx(),(qreal)pt.ry());
+        //gig->addToGroup(tx);
+        gig->addToGroup(el);
+   }
+    scene->addItem(gig);
+    //markers.insert("black_hints",   gig->toGraphicsObject());
+    markers.insert("black_hints",   gig);
+}
+void GoBoard::removeMarkers(QString name){
+    if(markers.contains(name)){
+        scene->removeItem(markers[name]);
+        markers.remove(name);
+    }
+}
+
 
 void GoBoard::drawBoard(){
     QBrush brush = QBrush(Qt::black);
@@ -114,7 +198,7 @@ QPoint GoBoard::alphaNumToPos(QString alphanum){
     if (match.hasMatch()) {
          number = match.captured("number");
          letter = match.captured("letter");
-         qDebug() <<"number:"<<number<<" letter: "<<letter;
+         //qDebug() <<"number:"<<number<<" letter: "<<letter;
          y = boardSize - number.toInt()+1;
          x = letter.at(0).toUpper().toLatin1() - 64;
          // looks like the letter I isn't supposed to be used... confusion with number 1?
@@ -122,13 +206,13 @@ QPoint GoBoard::alphaNumToPos(QString alphanum){
              x--;
          }
          x--; y--; //convert to zero-based counting for computing
-         qDebug() << " ( " << x << ", "<< y << ")";
+         //qDebug() << " ( " << x << ", "<< y << ")";
          y = y * gridSizePixels - (gridSizePixels/2.0);
          x = x * gridSizePixels- (gridSizePixels/2.0);//half subtracted to put stone on the lines
-         qDebug() <<"screen:" << " ( " << x << ", "<< y << ")";
+         //qDebug() <<"screen:" << " ( " << x << ", "<< y << ")";
 
     }else{
-        qDebug() << "Could match: "<<alphanum;
+        qDebug() << "Couldn't match: "<<alphanum;
     }
 
    return QPoint(x,y);
@@ -164,16 +248,17 @@ void GoBoard::placeStone(QString location, QString color){
 
 void GoBoard::removeStone(QString location){
     location = location.trimmed().toLower();
-    delete stoneHouse.at(location).stone;
-    stoneHouse.erase(location);
+    delete stoneHouse[location].stone;
+    stoneHouse.remove(location);
 }
 
 bool GoBoard::hasStone(QString location){
     location = location.trimmed().toLower();
-    if ( stoneHouse.find(location) == stoneHouse.end() ) {
-        return false;
-    } else {
+    //if ( stoneHouse.find(location) == stoneHouse.end() ) {
+    if(stoneHouse.contains(location)){
         return true;
+    } else {
+        return false;
     }
 }
 
@@ -181,7 +266,7 @@ void GoBoard::clearBoard(){
 //    for (std::map<char,int>::iterator it=mymap.begin(); it!=mymap.end(); ++it)
 
     for(auto it = stoneHouse.begin(); it != stoneHouse.end(); ++it){
-        delete  it->second.stone;
+        delete  it->stone;
     }
     stoneHouse.clear();
 }

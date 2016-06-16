@@ -46,7 +46,7 @@ void GTPEngineProcess::readyReadStandardOutput(){
     static QByteArray leftovers;
     got.push_front( leftovers );
     leftovers.clear();
-    qDebug() << "stdout got:" << got;
+    //qDebug() << "stdout got:" << got;
     while(!got.isEmpty()){
         int eqIdx = got.indexOf('=');
         int qIdx = got.indexOf('?');
@@ -55,7 +55,7 @@ void GTPEngineProcess::readyReadStandardOutput(){
         int startIdx=0;
         int length=0;
         respStartIdx = eqIdx > qIdx ? eqIdx:qIdx;
-        qDebug() << "A respStartIdx:"<<respStartIdx<< " eqIdx:" << eqIdx << " qIdx:"<<qIdx;
+        //qDebug() << "A respStartIdx:"<<respStartIdx<< " eqIdx:" << eqIdx << " qIdx:"<<qIdx;
         if(respStartIdx == -1){ //no start of response so is purely a continuation of last response
             startIdx = 0;
             length = got.length();
@@ -67,7 +67,7 @@ void GTPEngineProcess::readyReadStandardOutput(){
             eqIdx = got.indexOf('=', respStartIdx + 1);
             qIdx = got.indexOf('?', respStartIdx + 1);
                 respStartIdx = eqIdx > qIdx ? eqIdx:qIdx;
-                qDebug() << "B respStartIdx:"<<respStartIdx<< " eqIdx:" << eqIdx << " qIdx:"<<qIdx;
+              //  qDebug() << "B respStartIdx:"<<respStartIdx<< " eqIdx:" << eqIdx << " qIdx:"<<qIdx;
             if(respStartIdx == -1){//starts with = or ? and (is complete or continues in next read
                 length = got.length();
             }else{//starts with = or ? and is followed by another  = or ? and
@@ -78,9 +78,8 @@ void GTPEngineProcess::readyReadStandardOutput(){
         got.remove(startIdx, length);
 
 
-        qDebug() << "CHUNK:" << chunk;
-        qDebug() << "GOT:" << got;
-        //fuck, remove() doesn't return the removed part
+        //qDebug() << "CHUNK:" << chunk;
+        //qDebug() << "GOT:" << got;
 
         if(chunk.isEmpty()){
             leftovers = got;
@@ -89,32 +88,32 @@ void GTPEngineProcess::readyReadStandardOutput(){
 
         int response_count = chunk.count('=');
         response_count += chunk.count('?');
-        qDebug() << "response_count:"<< response_count;
+        //qDebug() << "response_count:"<< response_count;
         if(response_count > 1) {
             //hopefully don't have to worry about this
             //Nope, totally possible
             qDebug() << "Unhandled Number of Responses:"<<response_count;
         }else {
             //qDebug() << "Last two bytes are: " << chunk[chunk.length()]  << chunk[chunk.length()-1] ;
-            qDebug() << "Last two bytes are: " << chunk.at(chunk.length()-1)  << chunk.at(chunk.length()-2) ;
+            //qDebug() << "Last two bytes are: " << chunk.at(chunk.length()-1)  << chunk.at(chunk.length()-2) ;
             if( chunk.at(chunk.length()-1) == 0xA && chunk.at(chunk.length()-2) == 0xA){
                 //responses end in: \n\n so this is a completion
-                qDebug() << "Response completed";
+               // qDebug() << "Response completed";
                 exchanges.first().response.append(chunk);
                 exchanges.first().pending = false;
             }else{
-                qDebug() << "Incomplete Response";
+                //qDebug() << "Incomplete Response";
                 exchanges.first().response.append(chunk);
                 exchanges.first().pending = true;
             }
         }
         if(!exchanges.first().pending){
-            qDebug() << "Not pending so going to pop stack";
+            //qDebug() << "Not pending so going to pop stack";
             Exchange e = exchanges.first();
             exchanges.pop_front();
 
             if( e.response[0] == '='){
-                qDebug() << "Command was valid";
+             //   qDebug() << "Command was valid";
                 e.success = true;
                 processExchange(e);
             }else if(e.response[0] == '?'){
