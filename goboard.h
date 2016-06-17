@@ -21,6 +21,7 @@ class GoBoard: public QGraphicsView
     Q_OBJECT
 public:
     GoBoard(QWidget *parent);
+    bool isOnBoard(qreal i, qreal j);
     void drawBoard();
     QPoint alphaNumToPos(QString alphanum);
     QString posToAlphaNum(QPointF point);
@@ -31,7 +32,6 @@ public:
     bool hasStone(QString location);
     void clearBoard();
     void removeMarkers(QString name);
-    //QMap<QString,QGraphicsObject*> markers;
     QMap<QString, QGraphicsItemGroup*> markers;
 
     //vars

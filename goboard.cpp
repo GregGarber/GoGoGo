@@ -17,75 +17,50 @@ GoBoard::GoBoard(QWidget *parent = 0) : QGraphicsView(parent)
     blackStonePM = QPixmap("BlackStone.png");
     blackStoneCursorPM = QPixmap("BlackStoneCursor.png");
     cursor = QCursor(blackStoneCursorPM);
+    cursor.setShape(Qt::BlankCursor);
     this->setCursor(cursor);
 
     bgBrush = scene->backgroundBrush();
     bgBrush.setTexture(backgroundPM);
     scene->setBackgroundBrush(bgBrush);
 
+    //experiment
+    blackStone = scene->addPixmap(blackStoneCursorPM);
 }
 
+bool GoBoard::isOnBoard(qreal i, qreal j)
+{
+    return QRectF(0,0,GO_GRID_SIZE-gridSizePixels-10,GO_GRID_SIZE-gridSizePixels-10).contains(i,j);
+}
 void GoBoard::mouseMoveEvent(QMouseEvent *e){
-    /* meh
-    static int cnt=0;
-    cnt++;
-    if(cnt % 2 == 0){
-        qDebug() <<" cnt:"<<cnt;
-        */
-    static QPoint last_loc = cursor.pos();
-    QPoint global, tmp,offset;
-    global = cursor.pos();//int
-    tmp = global - last_loc;
-    qDebug() << "Man: " <<tmp.manhattanLength();
-    if(tmp.manhattanLength() > 0 ) { last_loc = global; return;}
-    QPointF sc;
-    QPointF local = e->localPos();
-    tmp.setX((int)local.rx());
-    tmp.setY((int)local.ry());
-    QPointF s = mapToScene(tmp );
-    sc = e->screenPos();//floaty
-    offset = global - tmp;
-    qDebug() << "Global (x,y) (" <<global.rx()<<", "<<global.ry()<<")";
-    qDebug() << "Screen (x,y) (" <<sc.rx()<<", "<<sc.ry()<<")";
-    qDebug() << "Offset(x,y) (" <<offset.rx()<<", "<<offset.ry()<<")";
-    qDebug() << "Local(x,y) (" <<local.rx()<<", "<<local.ry()<<")";
-    qDebug() << "Scene(x,y) (" <<s.rx()<<", "<<s.ry()<<")";
-    qreal i = gridSizePixels * (int)round((qreal)( s.rx()/(qreal)gridSizePixels));
-    qreal j = gridSizePixels * (int)round((qreal)( s.ry()/(qreal)gridSizePixels));
-    QPointF new_point(i,j);
-    QPoint loc = mapFromScene(new_point);
-    //cursor.setPos(global);
+    QPoint tmp;
+    QPointF local_pos = e->localPos();
+    QPointF scene_pos;
+    tmp.setX((int)local_pos.rx());
+    tmp.setY((int)local_pos.ry());
+    scene_pos = mapToScene(tmp );//why can't this take float?
+    qreal i = gridSizePixels * (int)round((qreal)( scene_pos.rx()/(qreal)gridSizePixels));
+    qreal j = gridSizePixels * (int)round((qreal)( scene_pos.ry()/(qreal)gridSizePixels));
+    if(isOnBoard(i,j)){
+        blackStone->show();
+        cursor.setShape(Qt::BlankCursor);
+        setCursor(cursor);
+    }else{
+        blackStone->hide();
+        cursor.setShape(Qt::ArrowCursor);
+        setCursor(cursor);
+    }
+    i-= blackStone->pixmap().width()/2;
+    j-= blackStone->pixmap().height()/2;
+    blackStone->setPos(i,j);
     QGraphicsView::mouseMoveEvent(e);
-    loc = loc + offset;
-    cursor.setPos( loc);
-    last_loc = global;
-    /*
-    if( loc.rx() > global.rx()) global.setX( global.rx() + 1);
-    if( loc.rx() < global.rx()) global.setX( global.rx() - 1);
-    if( loc.ry() > global.ry()) global.setY( global.ry() + 1);
-    if( loc.ry() < global.ry()) global.setY( global.ry() - 1);
-    cursor.setPos(global);
-    */
-    /*
-    if( abs(global.rx()-loc.rx()) < 5 ) global.setX( (loc.rx()+(8.0*global.rx()))/9.0 );
-    if( abs(global.ry()-loc.ry()) < 5 ) global.setY( (loc.ry()+(8.0*global.ry()))/9.0 );
-    cursor.setPos(global);
-    */
-    /*
-    int x,y;
-    x=abs(global.rx()-loc.rx()) ;
-    y=abs(global.ry()-loc.ry()) ;
-    global.setX( (loc.rx()+(x*global.rx()))/(1.0+x) );
-    global.setY( (loc.ry()+(y*global.ry()))/(1.0 +y) );
-    cursor.setPos(global);
-    */
-
-//}
 }
 
 void GoBoard::mouseReleaseEvent(QMouseEvent *e){
     QPointF sc = this->mapToScene(e->pos());
-    emit boardLeftClicked("black", posToAlphaNum(sc));
+    if(isOnBoard(sc.rx(), sc.ry())){
+        emit boardLeftClicked("black", posToAlphaNum(sc));
+    }
     QGraphicsView::mouseReleaseEvent(e);
 }
 
@@ -235,7 +210,7 @@ void GoBoard::placeStone(QString location, QString color){
                           .arg(( (uint)stoneHouse.size() +1) ) );
     if(stone.color != Blank){
         new_stone->setScale( ((qreal)gridSizePixels/(qreal)new_stone->boundingRect().width() ));
-        new_stone->setFlag(QGraphicsItem::ItemIsMovable);
+        //new_stone->setFlag(QGraphicsItem::ItemIsMovable);
         new_stone->setPos(alphaNumToPos(location));
         stone.stone = new_stone;
         if(hasStone(location)) removeStone(location);//can only be one stone per location

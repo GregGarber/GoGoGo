@@ -130,6 +130,19 @@ void MainWindow::list_stones(QString colour, QStringList verticies){
 void MainWindow::genmove(QString colour, QString vertex){
     qDebug() << "PLAY METHOD: colour: "<<colour<<" vertex:"<< vertex;
     ui->gameBoard->placeStone(vertex, colour);
+
+    // a little cheesey
+    if(ui->actionAutoplay->isChecked()){
+        if( vertex != "pass" && vertex != "resign"){
+            if(colour == "white"){
+                engine.write("genmove black");
+            }else{
+                engine.write("genmove white");
+            }
+        }
+    engine.write("list_stones white");
+    engine.write("list_stones black");
+    }
 }
 void MainWindow::play(QString colour, QString vertex){
     qDebug() << "PLAY METHOD: colour: "<<colour<<" vertex:"<< vertex;
