@@ -68,7 +68,7 @@ QString GoBoard::posToAlphaNum(QPointF point){
     int i,j;
     QString ret;
     i = (int)round((qreal)( point.rx()/(qreal)gridSizePixels));
-    j = 19-(int)round((qreal)( point.ry()/(qreal)gridSizePixels));
+    j = boardSize-(int)round((qreal)( point.ry()/(qreal)gridSizePixels));
     if(i > 7){
         i++;
     }
@@ -77,52 +77,54 @@ QString GoBoard::posToAlphaNum(QPointF point){
     return ret;
 }
 
-void GoBoard::checkStones(QString colour, QStringList verticies){
+void GoBoard::checkStones(QString color, QStringList verticies){
    foreach (const QString &str, stoneHouse.keys()){
-       if(stoneHouse[str].getStoneColor() == colour){
+       if(stoneHouse[str].getStoneColor() == color){
            if( !verticies.contains(str)) {
-               qDebug() << "REMOVE STONE: "<< colour << " " << str;
+               qDebug() << "REMOVE STONE: "<< color << " " << str;
                removeStone(str);
            }
        }
    }
    foreach(const QString &str, verticies){
        if(!stoneHouse.contains(str)){
-           placeStone(str, colour);
-           qDebug() << "Add Missing STONE: "<< colour << " " << str;
+           placeStone(str, color);
+           qDebug() << "Add Missing STONE: "<< color << " " << str;
        }else{
-           if(stoneHouse[str].getStoneColor() != colour){
-           qDebug() << "FIX miscoloured STONE: "<< colour << " " << str;
+           if(stoneHouse[str].getStoneColor() != color){
+           qDebug() << "FIX miscolored STONE: "<< color << " " << str;
                removeStone(str);
-               placeStone(str, colour);
+               placeStone(str, color);
            }
        }
    }
 }
 
-void GoBoard::showTopMoves(QString colour, QStringList verticies){
+void GoBoard::showTopMoves(QString color, QStringList verticies){
     QPoint pt;
     QPen pen(QColor(Qt::GlobalColor::red));
     QGraphicsItemGroup *gig = new QGraphicsItemGroup(boardBackground);
-    //QBrush brush(QColor(Qt::GlobalColor::black));
-                 pen.setWidth(10);
+    pen.setWidth(10);
     QFont font =QFont("Arial", 25, 9 );
     for(int i=0; i<verticies.length(); i+=2){//every other is a score
-    QBrush brush(QColor(255,255,0,(3*verticies[i+1].toInt())));
+        QBrush brush(QColor(255,255,0,(2*verticies[i+1].toInt())));
+        QString strength = QString("%1 %2").arg(verticies[i]).arg(verticies[i+1]);
         pt = alphaNumToPos(verticies[i]);
         QGraphicsEllipseItem *el = scene->addEllipse( (qreal)pt.rx(), (qreal) pt.ry(), 50.0,50.0,pen,brush);
-        QString strength = QString("%1").arg(verticies[i+1]);
+                el->setPos( el->pos().rx() + (el->rect().width()/2.0),
+                            el->pos().ry() + (el->rect().height()/2.0)
+                            );
+          QGraphicsSimpleTextItem *tx = scene->addSimpleText(strength, font);
+          tx->setPos(pt.rx()+(tx->boundingRect().width()/2.0), pt.ry()+(tx->boundingRect().height()/2.0));
+
         el->setToolTip(strength);
-        QGraphicsTextItem *tx = scene->addText(strength,font);
-    //    tx->setDefaultTextColor(Qt::red);
-        ///tx->setPos((qreal)pt.rx(),(qreal)pt.ry());
-        //gig->addToGroup(tx);
         gig->addToGroup(el);
-   }
+        gig->addToGroup(tx);
+    }
     scene->addItem(gig);
-    //markers.insert("black_hints",   gig->toGraphicsObject());
-    markers.insert("black_hints",   gig);
+    markers.insert(QString("%1_hints").arg(color), gig);
 }
+
 void GoBoard::removeMarkers(QString name){
     if(markers.contains(name)){
         scene->removeItem(markers[name]);
@@ -204,7 +206,7 @@ void GoBoard::placeStone(QString location, QString color){
     }else if( stone.color == White){
         new_stone = scene->addPixmap(whiteStonePM);
     }
-    new_stone->setToolTip(QString("Pos: %1\nColour: %2\nOrder: %3")
+    new_stone->setToolTip(QString("Pos: %1\nColor: %2\nOrder: %3")
                           .arg(location.toUpper() )
                           .arg(color.at(0).toUpper()+color.mid(1))
                           .arg(( (uint)stoneHouse.size() +1) ) );

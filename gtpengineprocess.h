@@ -25,11 +25,13 @@ signals:
     void gtpResponse(QString response, QString command, bool success);
 
 public slots:
-    void started();
-    void finished();
-    //use setReadChannel(stdout|stderr) to use read(), readLine(), or getChar()
-    void readyReadStandardOutput(); //readAllStandardOutput()
+    void showProcessError(QProcess::ProcessError err);
+    void finished(int exitCode, QProcess::ExitStatus exitStatus);
     void readyReadStandardError(); //readAllStandardError()
+    void readyReadStandardOutput(); //readAllStandardOutput()
+    void started();
+    void	stateChanged(QProcess::ProcessState newState);
+    //use setReadChannel(stdout|stderr) to use read(), readLine(), or getChar()
 
 
 

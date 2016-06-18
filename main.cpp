@@ -4,6 +4,9 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    a.setOrganizationName("Geek-Ranch");
+    a.setOrganizationDomain("geek-ranch.org");
+    a.setApplicationName("GoGoGo");
     //QFile file(":/stylesheet.css");//not sure why broken
     QFile file("/home/g/prog/GoGoGo/stylesheet.css");
     if(file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -15,6 +18,8 @@ int main(int argc, char *argv[])
     }
     MainWindow w;
     w.show();
+
+    w.connect(&a, SIGNAL(aboutToQuit()), &w, SLOT(on_actionQuit_triggered()));
 
     return a.exec();
 }

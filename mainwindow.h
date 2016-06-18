@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "gtpengineprocess.h"
+#include "settings.h"
 
 namespace Ui {
 class MainWindow;
@@ -16,6 +17,11 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     GTPEngineProcess engine;
+    Settings settings;
+    QSettings config;
+    void readSettings();
+    void writeSettings();
+
     QMap<QString, QString> commonREs = {
         {"cmd_str_vertex","^(?<cmd>\\w+)\\s+(?<value>\\w+)\\s+(?<vertex>\\w\\s?\\d\\d?)"},
         {"cmd_int","^(?<cmd>\\w+)\\s+(?<value>\\d+)"},
@@ -25,10 +31,8 @@ public:
         {"cmd_verticies","^(?<cmd>\\w+)(\\s+(?<verticies>\\w\\s?\\d\\d?))+"},
         {"cmd","^(?<cmd>\\w+)"},
         {"vertex","(?<vertex>\\w\\s?\\d\\d?)"},
-        {"verticies","(\\w\\s?\\d\\d?)+"}
+        {"verticies","(\\w\\s?[.\\d]+)+"}
     };
-        //{"verticies","((?<verticies>\\w\\s?\\d\\d?))+"}
-    //todo list of verticies for set free handicap, file stuff, dragona, dragonb
 
     struct CommandStuct{
         QString cmd_re;
@@ -38,17 +42,20 @@ public:
             {"play", {  "cmd_str_vertex", ""} },
             {"genmove", {  "cmd_str", "vertex"} },
             {"list_stones", {  "cmd_str", "verticies"} },
-            {"top_moves_black", {"cmd","verticies"}}
+            {"top_moves_black", {"cmd","verticies"}},
+            {"fixed_handicap", {"cmd_int","verticies"}}
     };
 
 public slots:
-    void doPlay(QString colour, QString vertex);
+    void doPlay(QString color, QString vertex);
     void processGtpResponse(QString response, QString command, bool success);
+    void engineStarted();
     //functions that process responses to respective commands
-    void play(QString colour, QString vertex);
-    void genmove(QString colour, QString vertex);
-    void list_stones(QString colour, QStringList verticies);
+    void play(QString color, QString vertex);
+    void genmove(QString color, QString vertex);
+    void list_stones(QString color, QStringList verticies);
     void top_moves_black(QStringList verticies);
+    void fixed_handicap(QStringList verticies);
 
 private slots:
     void on_buttonHint_clicked();

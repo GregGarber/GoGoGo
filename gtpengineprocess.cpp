@@ -2,22 +2,86 @@
 
 GTPEngineProcess::GTPEngineProcess(QObject *parent) : QObject(parent)
 {
-
-    connect(&process, SIGNAL(started()), this, SLOT(started()));
-    connect(&process, SIGNAL(finished(int)), this, SLOT(finished()));
-    connect(&process, SIGNAL(readyReadStandardOutput()), this, SLOT(readyReadStandardOutput()));
+    connect(&process, SIGNAL(errorOccurred(QProcess::ProcessError)), this, SLOT(showProcessError(QProcess::ProcessError)));
+    connect(&process, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(finished(int,QProcess::ExitStatus)));
     connect(&process, SIGNAL(readyReadStandardError()), this, SLOT(readyReadStandardError()));
-    //connect(&process, SIGNAL(started()), this, SLOT(started()));
+    connect(&process, SIGNAL(readyReadStandardOutput()), this, SLOT(readyReadStandardOutput()));
+    connect(&process, SIGNAL(started()), this, SLOT(started()));
+    connect(&process, SIGNAL(stateChanged(QProcess::ProcessState)), this, SLOT(stateChanged(QProcess::ProcessState)));
+}
+
+void GTPEngineProcess::stateChanged(QProcess::ProcessState newState){
+    switch(newState){
+    case QProcess::NotRunning:
+        qDebug() << process.program() << " State Changed to NotRunning";
+        break;
+    case QProcess::Starting:
+        qDebug() << process.program() << " PID:" << process.processId() << " State Changed to Starting";
+        break;
+    case QProcess::Running:
+        qDebug() << process.program() << " PID:" << process.processId() << " State Changed to Running";
+        break;
+    }
 }
 
 void GTPEngineProcess::start(){
     process.start(programPath, programArgs);
-     // /usr/local/gnugo/bin/gnugo --mode gtp --level 1  --depth 1
+    // /usr/local/gnugo/bin/gnugo --mode gtp --level 1  --depth 1
     //process.start("/usr/local/gnugo/bin/gnugo", QStringList() << "--mode"<<"gtp");
 }
 
+void GTPEngineProcess::started(){
+    qDebug() << "process started";
+    is_running = true;
+}
+
 void GTPEngineProcess::stop(){
-    process.terminate();
+    if(is_running){
+        write("quit");
+    }else{
+        process.close();
+    }
+    if(!process.waitForFinished()){
+        qDebug() << "Sending terminate to engine";
+        emit process.terminate();
+    }
+}
+
+void GTPEngineProcess::finished(int exitCode, QProcess::ExitStatus exitStatus){
+    qDebug() << "process finished: exitCode:" << exitCode<<" exitStatus:"<<exitStatus;
+    if(exitStatus == QProcess::CrashExit){
+        qDebug() << "Engine Crashed!";
+        showProcessError(process.error());
+    }else{
+        if(exitCode!=0){
+            qDebug() << "exitCode:"<<exitCode<<" is abnormal";
+        }
+    }
+    is_running = false;
+}
+
+void GTPEngineProcess::showProcessError(QProcess::ProcessError err){
+    qDebug() << "Error in process '"<<process.program()<<"' PID:"<< process.processId() << " ERROR:" <<process.errorString();
+    switch(err){
+    case QProcess::FailedToStart:
+        qDebug() << "The process failed to start. Either the invoked program is missing, or you may have insufficient permissions to invoke the program.";
+        break;
+    case QProcess::Crashed:
+        qDebug() << "The process crashed some time after starting successfully.";
+        break;
+    case QProcess::Timedout:
+        qDebug() << "The last waitFor...() function timed out. The state of QProcess is unchanged, and you can try calling waitFor...() again.";
+        break;
+    case QProcess::WriteError:
+        qDebug() << "An error occurred when attempting to write to the process. For example, the process may not be running, or it may have closed its input channel.";
+        break;
+    case QProcess::ReadError:
+        qDebug() << "An error occurred when attempting to read from the process. For example, the process may not be running.";
+        break;
+    case QProcess::UnknownError:
+        qDebug() << "An unknown error occurred. This is the default return value of error().";
+        break;
+    }
 }
 
 void GTPEngineProcess::setProgramPath(QString path){
@@ -26,20 +90,10 @@ void GTPEngineProcess::setProgramPath(QString path){
 
 void GTPEngineProcess::addProgramArg(QString arg){
     programArgs << arg.split(" ", QString::SkipEmptyParts);
-    //programArgs << arg;
 }
 
-void GTPEngineProcess::started(){
-    qDebug() << "process started";
-    is_running = true;
-}
 
-void GTPEngineProcess::finished(){
-    qDebug() << "process finished";
-    is_running = false;
-}
-
-        //use setReadChannel(stdout|stderr) to use read(), readLine(), or getChar()
+//use setReadChannel(stdout|stderr) to use read(), readLine(), or getChar()
 void GTPEngineProcess::readyReadStandardOutput(){
     QByteArray got = process.readAllStandardOutput();
     QByteArray chunk;
@@ -50,7 +104,7 @@ void GTPEngineProcess::readyReadStandardOutput(){
     while(!got.isEmpty()){
         int eqIdx = got.indexOf('=');
         int qIdx = got.indexOf('?');
-      //  int endIdx = got.indexOf("\n\n");
+        //  int endIdx = got.indexOf("\n\n");
         int respStartIdx=-1;
         int startIdx=0;
         int length=0;
@@ -66,8 +120,8 @@ void GTPEngineProcess::readyReadStandardOutput(){
             startIdx =respStartIdx;
             eqIdx = got.indexOf('=', respStartIdx + 1);
             qIdx = got.indexOf('?', respStartIdx + 1);
-                respStartIdx = eqIdx > qIdx ? eqIdx:qIdx;
-              //  qDebug() << "B respStartIdx:"<<respStartIdx<< " eqIdx:" << eqIdx << " qIdx:"<<qIdx;
+            respStartIdx = eqIdx > qIdx ? eqIdx:qIdx;
+            //  qDebug() << "B respStartIdx:"<<respStartIdx<< " eqIdx:" << eqIdx << " qIdx:"<<qIdx;
             if(respStartIdx == -1){//starts with = or ? and (is complete or continues in next read
                 length = got.length();
             }else{//starts with = or ? and is followed by another  = or ? and
@@ -76,10 +130,6 @@ void GTPEngineProcess::readyReadStandardOutput(){
         }
         chunk = got.mid(startIdx, length);
         got.remove(startIdx, length);
-
-
-        //qDebug() << "CHUNK:" << chunk;
-        //qDebug() << "GOT:" << got;
 
         if(chunk.isEmpty()){
             leftovers = got;
@@ -94,15 +144,11 @@ void GTPEngineProcess::readyReadStandardOutput(){
             //Nope, totally possible
             qDebug() << "Unhandled Number of Responses:"<<response_count;
         }else {
-            //qDebug() << "Last two bytes are: " << chunk[chunk.length()]  << chunk[chunk.length()-1] ;
-            //qDebug() << "Last two bytes are: " << chunk.at(chunk.length()-1)  << chunk.at(chunk.length()-2) ;
             if( chunk.at(chunk.length()-1) == 0xA && chunk.at(chunk.length()-2) == 0xA){
                 //responses end in: \n\n so this is a completion
-               // qDebug() << "Response completed";
                 exchanges.first().response.append(chunk);
                 exchanges.first().pending = false;
             }else{
-                //qDebug() << "Incomplete Response";
                 exchanges.first().response.append(chunk);
                 exchanges.first().pending = true;
             }
@@ -113,7 +159,7 @@ void GTPEngineProcess::readyReadStandardOutput(){
             exchanges.pop_front();
 
             if( e.response[0] == '='){
-             //   qDebug() << "Command was valid";
+                //   qDebug() << "Command was valid";
                 e.success = true;
                 processExchange(e);
             }else if(e.response[0] == '?'){
@@ -127,53 +173,6 @@ void GTPEngineProcess::readyReadStandardOutput(){
         }
     }
 }
-/*
-void GTPEngineProcess::readyReadStandardOutput(){
-    QByteArray got = process.readAllStandardOutput();
-    qDebug() << "stdout got:" << got;
-    while(!got.isEmpty()){
-        int response_count = got.count('=');
-        response_count += got.count('?');
-        qDebug() << "response_count:"<< response_count;
-        if(response_count > 1) {
-            //hopefully don't have to worry about this
-            //Nope, totally possible
-            qDebug() << "Unhandled Number of Responses:"<<response_count;
-        }else {
-            //qDebug() << "Last two bytes are: " << got[got.length()]  << got[got.length()-1] ;
-            qDebug() << "Last two bytes are: " << got.at(got.length()-1)  << got.at(got.length()-2) ;
-            if( got.at(got.length()-1) == 0xA && got.at(got.length()-2) == 0xA){
-                //responses end in: \n\n so this is a completion
-                qDebug() << "Response completed";
-                exchanges.first().response.append(got);
-                exchanges.first().pending = false;
-            }else{
-                qDebug() << "Incomplete Response";
-                exchanges.first().response.append(got);
-                exchanges.first().pending = true;
-            }
-        }
-        if(!exchanges.first().pending){
-            qDebug() << "Not pending so going to pop stack";
-            Exchange e = exchanges.first();
-            exchanges.pop_front();
-
-            if( e.response[0] == '='){
-                qDebug() << "Command was valid";
-                e.success = true;
-                processExchange(e);
-            }else if(e.response[0] == '?'){
-                qDebug() << "Command threw an error";
-                e.success = false;
-                processExchange(e);
-            }else{
-                qDebug() << "Shouldn't get here!!!!!!!!!!!!!!!!!!";
-            }
-
-        }
-    }
-}
-*/
 
 void GTPEngineProcess::readyReadStandardError(){
     QByteArray got = process.readAllStandardError();
@@ -188,7 +187,7 @@ void GTPEngineProcess::write(QByteArray data){
     e.command = data;
     qint64 len_written = process.write(data);
     if( len_written == data.count()){
-        qDebug() << "Wrote:"<<data;
+        //qDebug() << "Wrote:"<<data;
         exchanges.push_back(e);
     }else{
         qDebug() << "Error writing:" << data;
@@ -196,7 +195,7 @@ void GTPEngineProcess::write(QByteArray data){
 }
 
 void GTPEngineProcess::processExchange(Exchange e){
-    qDebug() << "Processing Exchange. There are " << exchanges.count() << " queued commands";
+    //qDebug() << "Processing Exchange. There are " << exchanges.count() << " queued commands";
     //convert to qstring and do some cleanup before emitting
     QString response(e.response);
     QString command(e.command);

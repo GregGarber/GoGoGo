@@ -15,13 +15,16 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     goboard.cpp \
-    gtpengineprocess.cpp
+    gtpengineprocess.cpp \
+    settings.cpp
 
 HEADERS  += mainwindow.h \
     goboard.h \
-    gtpengineprocess.h
+    gtpengineprocess.h \
+    settings.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    settings.ui
 
 RESOURCES += \
     resources.qrc

@@ -8,22 +8,34 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     connect(&engine, SIGNAL(gtpResponse(QString,QString,bool)), this, SLOT(processGtpResponse(QString,QString,bool)));
     connect(ui->gameBoard, SIGNAL(boardLeftClicked(QString,QString)),this,SLOT(doPlay(QString,QString)));
+    connect(&engine.process, SIGNAL(started()), this, SLOT(engineStarted()));
+    readSettings();
 
-    engine.setProgramPath("/usr/local/gnugo/bin/gnugo");
     engine.addProgramArg("--mode gtp");
     engine.start();
 }
 
 MainWindow::~MainWindow()
 {
-    if(engine.is_running) engine.stop();
+    writeSettings();
+ //   if(engine.is_running) engine.stop();
     delete ui;
 }
-void MainWindow::doPlay(QString colour, QString vertex){
-    qDebug() << "Do PLAY METHOD: colour: "<<colour<<" vertex:"<< vertex;
+
+void MainWindow::engineStarted(){
+    qDebug()<<"engine started for main window";
+    engine.write("clear_board");
+    QByteArray cmd("boardsize ");
+    cmd.append(QString("%1").arg(ui->gameBoard->boardSize));
+    engine.write(cmd);
+    ui->gameBoard->clearBoard();
+}
+
+void MainWindow::doPlay(QString color, QString vertex){
+    qDebug() << "Do PLAY METHOD: color: "<<color<<" vertex:"<< vertex;
     QByteArray cmd;
     cmd.append("play ");
-    cmd.append(colour);
+    cmd.append(color);
     cmd.append(" ");
     cmd.append(vertex);
     engine.write(cmd);
@@ -99,7 +111,7 @@ void MainWindow::processGtpResponse(QString response, QString command, bool succ
                                           QGenericArgument("QString", value),
                                           QGenericArgument("QStringList",  verticies)
                                           );
-            }else if(cmd_re == "cmd" && response_re =="verticies"){
+            }else if((cmd_re == "cmd" || cmd_re=="cmd_int") && response_re =="verticies"){
                 QMetaObject::invokeMethod(this,cmd.toLatin1().data(),
                                           QGenericArgument("QStringList",  verticies)
                                           );
@@ -108,46 +120,46 @@ void MainWindow::processGtpResponse(QString response, QString command, bool succ
         }
 
     }
-    /*
-        if(ui->actionAutoplay->isChecked()){
-            if(response != "pass" && response != "resign"){
-            if(color == "white"){
-                engine.write("genmove black");
-            }else{
-                engine.write("genmove white");
-            }
-    */
 
 void MainWindow::top_moves_black(QStringList verticies){
     ui->gameBoard->showTopMoves("black", verticies);
 }
 
-void MainWindow::list_stones(QString colour, QStringList verticies){
-    qDebug() << "list_stones... colour:" << colour <<" verticies:" <<verticies;
-    ui->gameBoard->checkStones(colour, verticies);
+void MainWindow::list_stones(QString color, QStringList verticies){
+    qDebug() << "list_stones... color:" << color <<" verticies:" <<verticies;
+    ui->gameBoard->checkStones(color, verticies);
 }
 
-void MainWindow::genmove(QString colour, QString vertex){
-    qDebug() << "PLAY METHOD: colour: "<<colour<<" vertex:"<< vertex;
-    ui->gameBoard->placeStone(vertex, colour);
+void MainWindow::genmove(QString color, QString vertex){
+    qDebug() << "PLAY METHOD: color: "<<color<<" vertex:"<< vertex;
+    ui->gameBoard->placeStone(vertex, color);
 
     // a little cheesey
     if(ui->actionAutoplay->isChecked()){
-        if( vertex != "pass" && vertex != "resign"){
-            if(colour == "white"){
+        //if( vertex != "pass" && vertex != "resign"){
+        if( vertex != ""){
+            if(color == "white"){
                 engine.write("genmove black");
             }else{
                 engine.write("genmove white");
             }
-        }
     engine.write("list_stones white");
     engine.write("list_stones black");
+        }
     }
 }
-void MainWindow::play(QString colour, QString vertex){
-    qDebug() << "PLAY METHOD: colour: "<<colour<<" vertex:"<< vertex;
+void MainWindow::play(QString color, QString vertex){
+    qDebug() << "PLAY METHOD: color: "<<color<<" vertex:"<< vertex;
     ui->gameBoard->removeMarkers("black_hints");
-    ui->gameBoard->placeStone(vertex, colour);
+    ui->gameBoard->placeStone(vertex, color);
+}
+
+void MainWindow::fixed_handicap(QStringList verticies){
+    qDebug()<<"Fixed Handicap, verts:"<<verticies;
+    for(int i=0;i<verticies.length();i++){
+        qDebug() <<i<<" "<<verticies[i];
+        ui->gameBoard->placeStone(verticies[i], "black");
+    }
 }
 
 void MainWindow::on_buttonHint_clicked()
@@ -168,7 +180,10 @@ void MainWindow::on_actionNew_Game_triggered()
     if(!engine.is_running){
         engine.start();
     }
-    engine.write("clearboard");
+    engine.write("clear_board");
+    QByteArray cmd("boardsize ");
+    cmd.append(QString("%1").arg(ui->gameBoard->boardSize));
+    engine.write(cmd);
     ui->gameBoard->clearBoard();
 
 }
@@ -190,8 +205,14 @@ void MainWindow::on_actionOpen_triggered()
 
 void MainWindow::on_actionQuit_triggered()
 {
+    int cnt=0;
     if(engine.is_running){
         engine.stop();
+    }
+    while(engine.is_running && cnt<10) {
+        qDebug() << "Delay...";
+        cnt++;
+        QThread::msleep(100);
     }
     QApplication::quit();
 }
@@ -214,6 +235,7 @@ void MainWindow::on_actionRedo_triggered()
 void MainWindow::on_actionPreferences_triggered()
 {
 
+settings.show();
 }
 
 void MainWindow::on_actionUndo_2_triggered()
@@ -276,6 +298,7 @@ void MainWindow::on_actionAutoplay_triggered()
 
 void MainWindow::on_gameBoard_customContextMenuRequested(const QPoint &pos)
 {
+    qDebug() << "TODO context menu requested at:"<<pos;
     /* The gameBoard may not be the right thing to attach the menu to since it might
      * prevent the scene and graphic items from having context menus which is probably
      * what I really want.
@@ -291,4 +314,28 @@ void MainWindow::on_gameBoard_customContextMenuRequested(const QPoint &pos)
     delete rightClickItem;
 
 */
+}
+
+void MainWindow::writeSettings()
+{
+    config.beginGroup("MainWindow");
+    config.setValue("size", size());
+    config.setValue("pos", pos());
+    config.endGroup();
+}
+
+void MainWindow::readSettings()
+{
+    config.beginGroup("MainWindow");
+    resize(config.value("size", QSize(1024, 768)).toSize());
+    move(config.value("pos", QPoint(20, 20)).toPoint());
+    config.endGroup();
+    config.beginGroup("Engine");
+#ifdef Q_OS_UNIX
+    engine.setProgramPath( config.value("program_path", "/usr/games/gnugo").toString() );
+#elif
+    //probably Windblows chunks
+    engine.setProgramPath( config.value("program_path").toString() );//no clue what it should default to
+#endif
+    config.endGroup();
 }
