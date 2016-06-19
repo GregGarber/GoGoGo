@@ -23,12 +23,7 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::engineStarted(){
-    qDebug()<<"engine started for main window";
-    engine.write("clear_board");
-    QByteArray cmd("boardsize ");
-    cmd.append(QString("%1").arg(ui->gameBoard->boardSize));
-    engine.write(cmd);
-    ui->gameBoard->clearBoard();
+    on_actionNew_Game_triggered();
 }
 
 void MainWindow::doPlay(QString color, QString vertex){
@@ -50,7 +45,8 @@ void MainWindow::processGtpResponse(QString response, QString command, bool succ
     const void* response_vertex = nullptr;
     const void* verticies = nullptr;
 
-    ui->textHistory->appendPlainText(QString("%1 %2 %3\n").arg(command).arg(response).arg(success));
+    ui->textHistory->appendPlainText(QString("%1 %2 %3\n").arg(command).arg(response).arg(success ? "Ok":"Err"));
+    if(!success) return; //problem, play will keep playing. IOW, white will move if black attemped illegal move
     QString value_str, vertex_str, response_vertex_str;
     QStringList verticies_list;
     QRegularExpression re(commonREs.value("cmd"));
@@ -126,12 +122,12 @@ void MainWindow::top_moves_black(QStringList verticies){
 }
 
 void MainWindow::list_stones(QString color, QStringList verticies){
-    qDebug() << "list_stones... color:" << color <<" verticies:" <<verticies;
+    //qDebug() << "list_stones... color:" << color <<" verticies:" <<verticies;
     ui->gameBoard->checkStones(color, verticies);
 }
 
 void MainWindow::genmove(QString color, QString vertex){
-    qDebug() << "PLAY METHOD: color: "<<color<<" vertex:"<< vertex;
+    //qDebug() << "PLAY METHOD: color: "<<color<<" vertex:"<< vertex;
     ui->gameBoard->placeStone(vertex, color);
 
     // a little cheesey
@@ -186,6 +182,13 @@ void MainWindow::on_actionNew_Game_triggered()
     engine.write(cmd);
     ui->gameBoard->clearBoard();
 
+    cmd.clear();
+    cmd.append(QString("fixed_handicap %1").arg(handicap));
+    engine.write(cmd);
+
+    cmd.clear();
+    cmd.append(QString("komi %1").arg(komi));
+    engine.write(cmd);
 }
 
 void MainWindow::on_actionSave_Game_triggered()
@@ -315,6 +318,23 @@ void MainWindow::on_gameBoard_customContextMenuRequested(const QPoint &pos)
 
 */
 }
+    void MainWindow::setBlackName(QString name){
+        this->blackName = name;
+        ui->labelBlack->setText(QString("%1 (Black)").arg(name));
+    }
+
+    void MainWindow::setWhiteName(QString name){
+        this->whiteName = name;
+        ui->labelWhite->setText(QString("%1 (White)").arg(name));
+    }
+
+    void MainWindow::setHandicap(int handicap){
+        this->handicap = handicap;
+    }
+
+    void MainWindow::setKomi(qreal komi){
+        this->komi = komi;
+    }
 
 void MainWindow::writeSettings()
 {
@@ -337,5 +357,12 @@ void MainWindow::readSettings()
     //probably Windblows chunks
     engine.setProgramPath( config.value("program_path").toString() );//no clue what it should default to
 #endif
+    config.endGroup();
+
+    config.beginGroup("Players");
+    setBlackName(config.value("black_name").toString());
+    setWhiteName(config.value("white_name").toString());
+    setKomi(config.value("komi").toDouble());
+    setHandicap(config.value("handicap").toInt());
     config.endGroup();
 }

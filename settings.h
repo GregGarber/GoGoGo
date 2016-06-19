@@ -18,8 +18,11 @@ public:
     void writeSettings();
     void readSettings();
 
+
 private slots:
     void on_buttonBox_accepted();
+    void blackSpeciesChanged(QString txt);
+    void whiteSpeciesChanged(QString txt);
 
 private:
     Ui::Settings *ui;

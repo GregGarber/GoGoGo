@@ -6,6 +6,8 @@ Settings::Settings(QWidget *parent) :
     ui(new Ui::Settings)
 {
     ui->setupUi(this);
+    connect(ui->comboBoxBlackSpecies, SIGNAL(currentTextChanged(QString)), this, SLOT(blackSpeciesChanged(QString)));
+    connect(ui->comboBoxWhiteSpecies, SIGNAL(currentTextChanged(QString)), this, SLOT(whiteSpeciesChanged(QString)));
     readSettings();
 }
 
@@ -71,4 +73,24 @@ void Settings::readSettings()
 void Settings::on_buttonBox_accepted()
 {
     writeSettings();
+}
+
+void Settings::blackSpeciesChanged(QString txt){
+    if(txt == "Network"){
+        ui->labelBlackUrl->setEnabled(true);
+        ui->lineEditBlackUrl->setEnabled(true);
+    }else{
+        ui->labelBlackUrl->setEnabled(false);
+        ui->lineEditBlackUrl->setEnabled(false);
+    }
+}
+
+void Settings::whiteSpeciesChanged(QString txt){
+    if(txt == "Network"){
+        ui->labelWhiteUrl->setEnabled(true);
+        ui->lineEditWhiteUrl->setEnabled(true);
+    }else{
+        ui->labelWhiteUrl->setEnabled(false);
+        ui->lineEditWhiteUrl->setEnabled(false);
+    }
 }

@@ -12,8 +12,8 @@
 #include <QDebug>
 #include <map>
 
-#define GO_BOARD_SIZE 1200
-#define GO_GRID_SIZE 1000
+#define GO_BOARD_SIZE 1207
+#define GO_GRID_SIZE 1007
 #define GO_BORDER_SIZE (GO_BOARD_SIZE - GO_GRID_SIZE) /2
 
 class GoBoard: public QGraphicsView
@@ -22,8 +22,9 @@ class GoBoard: public QGraphicsView
 public:
     GoBoard(QWidget *parent);
     bool isOnBoard(qreal i, qreal j);
+    bool isOnBoard(QPointF j);
     void drawBoard();
-    QPoint alphaNumToPos(QString alphanum);
+    QPointF alphaNumToPos(QString alphanum);
     QString posToAlphaNum(QPointF point);
     void placeStone(QString location, QString color);
     void removeStone(QString location);
@@ -32,9 +33,19 @@ public:
     bool hasStone(QString location);
     void clearBoard();
     void removeMarkers(QString name);
+    void readSettings();
+    void center(auto *item);
+    void center(auto *item, QPointF p);
+    void center(auto *item, qreal x, qreal y);
     QMap<QString, QGraphicsItemGroup*> markers;
+    QSettings config;
 
     //vars
+    enum PseudoCursorData{
+        HALF_SIZE,
+        REAL_POS
+    };
+
     QCursor cursor;
     enum StoneColors {
         Black,
@@ -71,17 +82,20 @@ public:
     //std::map<QString, Stone> stoneHouse;
     QMap<QString, Stone> stoneHouse;
     int boardSize = 9;
-    int gridSizePixels = 0;
+    qreal gridSizePixels = 0.0;
+    QString playerColor="black";
     QBrush bgBrush;
+    QBrush redBrush;
+    QPen redPen;
     QGraphicsScene* scene;
     QGraphicsTextItem *text;
     QPixmap blackStonePM;
     QPixmap blackStoneCursorPM;
+    QPixmap whiteStoneCursorPM;
     QPixmap whiteStonePM;
     QPixmap backgroundPM;
     QGraphicsPixmapItem* boardBackground;
-    QGraphicsPixmapItem* whiteStone;
-    QGraphicsPixmapItem* blackStone;
+    QGraphicsPixmapItem* pseudoCursor;
 signals:
     void boardLeftClicked(QString color, QString vertex);
 

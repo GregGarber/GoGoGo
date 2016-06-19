@@ -21,6 +21,14 @@ public:
     QSettings config;
     void readSettings();
     void writeSettings();
+    void setBlackName(QString name);
+    void setWhiteName(QString name);
+    void setHandicap(int handicap);
+    void setKomi(qreal komi);
+
+    QString blackName, whiteName;
+    int handicap;
+    qreal komi;
 
     QMap<QString, QString> commonREs = {
         {"cmd_str_vertex","^(?<cmd>\\w+)\\s+(?<value>\\w+)\\s+(?<vertex>\\w\\s?\\d\\d?)"},

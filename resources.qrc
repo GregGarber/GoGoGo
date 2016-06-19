@@ -8,5 +8,6 @@
         <file>images/WhiteStone.png</file>
         <file>images/WoodBoard1.png</file>
         <file>stylesheet.css</file>
+        <file>images/WhiteStoneCursor.png</file>
     </qresource>
 </RCC>
