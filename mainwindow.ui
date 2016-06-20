@@ -73,15 +73,34 @@
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
              <widget class="QLabel" name="labelBlack">
+              <property name="styleSheet">
+               <string notr="true">#labelBlack { color: black;}</string>
+              </property>
               <property name="text">
                <string>Black:</string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QLabel" name="labelWhite">
+              <property name="styleSheet">
+               <string notr="true">#labelWhite { color: white;}</string>
+              </property>
               <property name="text">
                <string>White:</string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="labelNotes">
+              <property name="text">
+               <string>Notes:</string>
               </property>
              </widget>
             </item>
@@ -114,6 +133,9 @@
                 <widget class="QPushButton" name="buttonHint">
                  <property name="text">
                   <string>Hint</string>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>

@@ -34,8 +34,28 @@ bool MainWindow::successful(QByteArray reply){
 }
 
 void MainWindow::doPlay(QString color, QString vertex){
+    /* works but confusing
+    if(game_over) return;
+    color = lastPlayer.length()==0 ? "black" : otherColor(lastPlayer);
+    QString species;
+    species = (color=="white" ) ? whiteSpecies : blackSpecies;
+    if(species.contains("Human", Qt::CaseInsensitive)){
+        if(play(color, vertex)){
+                    species = (otherColor(color)=="white" ) ? whiteSpecies : blackSpecies;
+                    if(species.contains("Computer", Qt::CaseInsensitive)){
+                        color=otherColor(color);
+                        genmove( color );
+                    }
+            if( ui->buttonHint->isChecked()) top_moves(color);
+        }
+    }
+    lastPlayer = color;
+    */
+    /*
+    */
     if(play(color, vertex)){
-        genmove("white");
+        genmove( otherColor(color) );
+        if( ui->buttonHint->isChecked()) top_moves(color);
     }
 }
 
@@ -82,7 +102,12 @@ bool MainWindow::captures(QString color){
 
 bool MainWindow::undo(int moves=1){
     bool ret = false;
-    QByteArray reply = engine.write( QString("undo %1").arg(moves));
+    QByteArray reply;
+    if(moves == 1){
+        reply = engine.write( QString("undo").arg(moves));
+    }else{
+        reply = engine.write( QString("gg-undo %1").arg(moves));
+    }
     if(successful( reply )){
         ret =  captures("black");
         ret &= captures("white");
@@ -122,11 +147,60 @@ void MainWindow::updatePass(QString color){
     }
 }
 
+/*
+ "0" (zero) for a draw (jigo)
+"B+score" for a black win and
+"W+score" for a white win, e.g. "B+2.5", "W+64" or "B+0.5"
+"B+R"/"B+Resign" and "W+R"/"W+Resign" for a win by resignation.
+You MUST NOT write "Black resigns" // assuming this means in file format?
+*/
 void MainWindow::final_score(){
     QByteArray reply = engine.write( QString("final_score"));
     if(successful( reply )){
+        game_over = true;
         ui->textHistory->appendPlainText(QString(reply));
+        QRegularExpression re(commonREs.value("sgf_score"));
+        QRegularExpressionMatch match = re.match(reply);
+        QString  color, score;
+        if (match.hasMatch()) {
+            color = match.captured("color");
+            score = match.captured("score");
+            if(score.contains("R", Qt::CaseInsensitive)){
+                //resigned
+                if(color.contains("b", Qt::CaseInsensitive)){
+                    black_score = "Resigned";
+                    white_score = "Wins";
+                }else{
+                    white_score = "Resigned";
+                    black_score = "Wins";
+                }
+            }else{
+                if(color.contains("b", Qt::CaseInsensitive)){
+                    black_score=QString("Wins: %1").arg(score);
+                }else if(color.contains("w", Qt::CaseInsensitive)){
+                    white_score = QString("Wins: %1").arg(score);
+                }else if(color.contains("0")){
+                    black_score="Draw (jigo)";
+                    white_score="Draw (jigo)";
+                }
+            }
+                    updateBlackScore();
+                    updateWhiteScore();
+        }
     }
+}
+
+bool MainWindow::resign(QString color){
+    bool ret = false;
+    final_score();
+    /* Can't figure out how to do resign. genmove can return it, but play can't send it.
+    QByteArray reply = engine.write( QString("play %1 resign").arg(color));
+    if(successful( reply )){
+        ret = true;
+        final_score();
+    }
+    */
+    return ret;
 }
 
 bool MainWindow::list_stones(QString color){
@@ -199,6 +273,7 @@ bool MainWindow::genmove(QString color){
                 updatePass(color);
             }else if(something.contains("resign")){
                 ui->textHistory->appendPlainText(QString("genmove %1 resigned").arg(color));
+                final_score();
             }else{
                 ui->textHistory->appendPlainText(QString("genmove WTF %1 %2").arg(color).arg(something));
             }
@@ -262,11 +337,19 @@ bool MainWindow::komi(qreal komi){
 }
 
 void MainWindow::updateBlackScore(){
-    ui->labelBlack->setText(QString("Black: %1: captures:%2: score:%3").arg(blackName).arg(black_captures).arg(black_score));
+    if(black_score.length()>0){
+        ui->labelBlack->setText(QString("B %1 capt:%2 %3").arg(blackName).arg(black_captures).arg(black_score));
+    }else{
+        ui->labelBlack->setText(QString("B %1 capt:%2 ").arg(blackName).arg(black_captures));
+    }
 }
 
 void MainWindow::updateWhiteScore(){
-    ui->labelWhite->setText(QString("White: %1: captures:%2: score:%3").arg(whiteName).arg(white_captures).arg(white_score));
+    if(white_score.length()>0){
+        ui->labelWhite->setText(QString("W %1 capt:%2 %3").arg(whiteName).arg(white_captures).arg(white_score));
+    }else{
+        ui->labelWhite->setText(QString("W %1 capt:%2 ").arg(whiteName).arg(white_captures));
+    }
 }
 
 void MainWindow::on_buttonHint_clicked()
@@ -282,7 +365,7 @@ void MainWindow::on_buttonPass_clicked()
 
 void MainWindow::on_buttonResign_clicked()
 {
-    final_score();
+    resign("black");
 }
 
 void MainWindow::on_actionNew_Game_triggered()
@@ -483,6 +566,8 @@ void MainWindow::readSettings()
     config.beginGroup("Players");
     setBlackName(config.value("black_name").toString());
     setWhiteName(config.value("white_name").toString());
+    blackSpecies = config.value("black_species").toString();
+    whiteSpecies = config.value("white_species").toString();
     setKomi(config.value("komi").toDouble());
     setHandicap(config.value("handicap").toInt());
     config.endGroup();

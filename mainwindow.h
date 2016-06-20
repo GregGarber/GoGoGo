@@ -27,6 +27,8 @@ public:
     void setKomi(qreal komi);
 
     QString blackName, whiteName;
+    QString blackSpecies, whiteSpecies;
+    QString lastPlayer;
     int handicap;
     qreal komi_value;
 
@@ -38,6 +40,7 @@ public:
         {"cmd_vertex","^(?<cmd>\\w+)\\s+(?<vertex>\\w\\s?\\d\\d?)"},
         {"cmd_verticies","^(?<cmd>\\w+)(\\s+(?<verticies>\\w\\s?\\d\\d?))+"},
         {"cmd","^(?<cmd>\\w+)"},
+        {"sgf_score","(?<color>\\w|0)\\+(?<score>[.\\d]+|\\w+)"}, // read: "= B+111.5\n\n"
         {"int","(?<int>\\d+)"},
         {"vertex","(?<vertex>\\w\\s?\\d\\d?)"},
         {"verticies","(\\w\\s?[.\\d]+)+"}
@@ -80,6 +83,7 @@ public:
     bool successful(QByteArray reply);
     bool undo(int moves);
     bool pass(QString color);
+    bool resign(QString color);
     void resetPass(QString color);
     void updatePass(QString color);
     void final_score();
