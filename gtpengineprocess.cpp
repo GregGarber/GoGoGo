@@ -5,7 +5,6 @@ GTPEngineProcess::GTPEngineProcess(QObject *parent) : QObject(parent)
     connect(&process, SIGNAL(errorOccurred(QProcess::ProcessError)), this, SLOT(showProcessError(QProcess::ProcessError)));
     connect(&process, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(finished(int,QProcess::ExitStatus)));
     connect(&process, SIGNAL(readyReadStandardError()), this, SLOT(readyReadStandardError()));
-    connect(&process, SIGNAL(readyReadStandardOutput()), this, SLOT(readyReadStandardOutput()));
     connect(&process, SIGNAL(started()), this, SLOT(started()));
     connect(&process, SIGNAL(stateChanged(QProcess::ProcessState)), this, SLOT(stateChanged(QProcess::ProcessState)));
 }
@@ -93,116 +92,33 @@ void GTPEngineProcess::addProgramArg(QString arg){
 }
 
 
-//use setReadChannel(stdout|stderr) to use read(), readLine(), or getChar()
-void GTPEngineProcess::readyReadStandardOutput(){
-    QByteArray got = process.readAllStandardOutput();
-    QByteArray chunk;
-    static QByteArray leftovers;
-    got.push_front( leftovers );
-    leftovers.clear();
-    //qDebug() << "stdout got:" << got;
-    while(!got.isEmpty()){
-        int eqIdx = got.indexOf('=');
-        int qIdx = got.indexOf('?');
-        //  int endIdx = got.indexOf("\n\n");
-        int respStartIdx=-1;
-        int startIdx=0;
-        int length=0;
-        respStartIdx = eqIdx > qIdx ? eqIdx:qIdx;
-        //qDebug() << "A respStartIdx:"<<respStartIdx<< " eqIdx:" << eqIdx << " qIdx:"<<qIdx;
-        if(respStartIdx == -1){ //no start of response so is purely a continuation of last response
-            startIdx = 0;
-            length = got.length();
-        }else if(respStartIdx > 0){ //begins with stuff from last time, but beginning of response follows
-            startIdx =0;
-            length = respStartIdx;
-        }else{ //starts with = or ?
-            startIdx =respStartIdx;
-            eqIdx = got.indexOf('=', respStartIdx + 1);
-            qIdx = got.indexOf('?', respStartIdx + 1);
-            respStartIdx = eqIdx > qIdx ? eqIdx:qIdx;
-            //  qDebug() << "B respStartIdx:"<<respStartIdx<< " eqIdx:" << eqIdx << " qIdx:"<<qIdx;
-            if(respStartIdx == -1){//starts with = or ? and (is complete or continues in next read
-                length = got.length();
-            }else{//starts with = or ? and is followed by another  = or ? and
-                length = respStartIdx ;
-            }
-        }
-        chunk = got.mid(startIdx, length);
-        got.remove(startIdx, length);
-
-        if(chunk.isEmpty()){
-            leftovers = got;
-            return;
-        }
-
-        int response_count = chunk.count('=');
-        response_count += chunk.count('?');
-        //qDebug() << "response_count:"<< response_count;
-        if(response_count > 1) {
-            //hopefully don't have to worry about this
-            //Nope, totally possible
-            qDebug() << "Unhandled Number of Responses:"<<response_count;
-        }else {
-            if( chunk.at(chunk.length()-1) == 0xA && chunk.at(chunk.length()-2) == 0xA){
-                //responses end in: \n\n so this is a completion
-                exchanges.first().response.append(chunk);
-                exchanges.first().pending = false;
-            }else{
-                exchanges.first().response.append(chunk);
-                exchanges.first().pending = true;
-            }
-        }
-        if(!exchanges.first().pending){
-            //qDebug() << "Not pending so going to pop stack";
-            Exchange e = exchanges.first();
-            exchanges.pop_front();
-
-            if( e.response[0] == '='){
-                //   qDebug() << "Command was valid";
-                e.success = true;
-                processExchange(e);
-            }else if(e.response[0] == '?'){
-                qDebug() << "Command threw an error";
-                e.success = false;
-                processExchange(e);
-            }else{
-                qDebug() << "Shouldn't get here!!!!!!!!!!!!!!!!!!";
-            }
-
-        }
-    }
-}
-
 void GTPEngineProcess::readyReadStandardError(){
     QByteArray got = process.readAllStandardError();
     qDebug() <<"stderr:" << got;
 }
 
-void GTPEngineProcess::write(QByteArray data){
-    //data = "this is an error\n";
-    //data = "genmove black\n";
+//use setReadChannel(stdout|stderr) to use read(), readLine(), or getChar()
+
+QByteArray GTPEngineProcess::write(const char *data){
+    return write(QByteArray(data));
+}
+
+QByteArray GTPEngineProcess::write(QString data){
+    return write(data.toLatin1());
+}
+
+QByteArray GTPEngineProcess::write(QByteArray data){
+    qDebug() << "write:"<< data;
+    QByteArray buffer;
     data = data.trimmed().append("\n");
-    Exchange e;
-    e.command = data;
-    qint64 len_written = process.write(data);
-    if( len_written == data.count()){
-        //qDebug() << "Wrote:"<<data;
-        exchanges.push_back(e);
-    }else{
-        qDebug() << "Error writing:" << data;
+    process.write(data);
+    if(!process.waitForBytesWritten()){
+        qDebug() << "Error writing ";
     }
+    while( process.waitForReadyRead()){
+        buffer.append(process.readAll());
+        if( buffer.contains("\n\n")) break;
+    }
+    qDebug() << "read:"<< buffer;
+    return buffer;
 }
-
-void GTPEngineProcess::processExchange(Exchange e){
-    //qDebug() << "Processing Exchange. There are " << exchanges.count() << " queued commands";
-    //convert to qstring and do some cleanup before emitting
-    QString response(e.response);
-    QString command(e.command);
-    bool success = e.success;
-    response = response.remove(0,1).trimmed().toLower(); //git rid of = or ? and trim off white space
-    command = command.trimmed().toLower();
-    emit( gtpResponse(response, command, success) );
-}
-
-

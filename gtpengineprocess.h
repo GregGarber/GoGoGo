@@ -19,7 +19,9 @@ public:
     void stop();
     void setProgramPath(QString path);
     void addProgramArg(QString arg);
-    void write(QByteArray data);
+    QByteArray write(const char* data);
+    QByteArray write(QString data);
+    QByteArray write(QByteArray data);
     QByteArray communicate(QByteArray data);
 signals:
     void gtpResponse(QString response, QString command, bool success);
@@ -28,7 +30,6 @@ public slots:
     void showProcessError(QProcess::ProcessError err);
     void finished(int exitCode, QProcess::ExitStatus exitStatus);
     void readyReadStandardError(); //readAllStandardError()
-    void readyReadStandardOutput(); //readAllStandardOutput()
     void started();
     void	stateChanged(QProcess::ProcessState newState);
     //use setReadChannel(stdout|stderr) to use read(), readLine(), or getChar()

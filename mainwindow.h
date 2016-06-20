@@ -28,7 +28,7 @@ public:
 
     QString blackName, whiteName;
     int handicap;
-    qreal komi;
+    qreal komi_value;
 
     QMap<QString, QString> commonREs = {
         {"cmd_str_vertex","^(?<cmd>\\w+)\\s+(?<value>\\w+)\\s+(?<vertex>\\w\\s?\\d\\d?)"},
@@ -38,6 +38,7 @@ public:
         {"cmd_vertex","^(?<cmd>\\w+)\\s+(?<vertex>\\w\\s?\\d\\d?)"},
         {"cmd_verticies","^(?<cmd>\\w+)(\\s+(?<verticies>\\w\\s?\\d\\d?))+"},
         {"cmd","^(?<cmd>\\w+)"},
+        {"int","(?<int>\\d+)"},
         {"vertex","(?<vertex>\\w\\s?\\d\\d?)"},
         {"verticies","(\\w\\s?[.\\d]+)+"}
     };
@@ -54,16 +55,37 @@ public:
             {"fixed_handicap", {"cmd_int","verticies"}}
     };
 
+    QString getVertex(QByteArray reply, bool &found);
+    QStringList getVerticies(QByteArray reply, bool &found);
+    int getInt(QByteArray reply, bool &found);
+    QString otherColor(QString color);
+    void updateBlackScore();
+    void updateWhiteScore();
+    int black_captures = 0;
+    int white_captures = 0;
+    QString black_score;
+    QString white_score;
+    bool  is_black_passing = false;
+    bool  is_white_passing = false;
+    bool game_over = false;
+    int moves =0;
+    bool captures(QString color);
+    bool play(QString color, QString vertex);
+    bool genmove(QString color);
+    bool list_stones(QString color);
+    bool top_moves(QString color);
+    bool fixed_handicap(int handicap);
+    bool boardsize(int size);
+    bool komi(qreal komi);
+    bool successful(QByteArray reply);
+    bool undo(int moves);
+    bool pass(QString color);
+    void resetPass(QString color);
+    void updatePass(QString color);
+    void final_score();
 public slots:
     void doPlay(QString color, QString vertex);
-    void processGtpResponse(QString response, QString command, bool success);
     void engineStarted();
-    //functions that process responses to respective commands
-    void play(QString color, QString vertex);
-    void genmove(QString color, QString vertex);
-    void list_stones(QString color, QStringList verticies);
-    void top_moves_black(QStringList verticies);
-    void fixed_handicap(QStringList verticies);
 
 private slots:
     void on_buttonHint_clicked();
