@@ -55,6 +55,7 @@ void MainWindow::doPlay(QString color, QString vertex){
     */
     if(play(color, vertex)){
         genmove( otherColor(color) );
+        new_score();
         if( ui->buttonHint->isChecked()) top_moves(color);
     }
 }
@@ -203,6 +204,21 @@ bool MainWindow::resign(QString color){
     return ret;
 }
 
+bool MainWindow::move_reasons(QString vertex){
+    bool ret = false;
+    QByteArray reply = engine.write( QString("move_reasons %1").arg(vertex));
+    if(successful( reply )){
+        QString r = QString(reply);
+        QStringList reasons = r.split("\n");
+        for(int i=0; i<reasons.length();i++){
+            ui->textHistory->appendPlainText(reasons.at(i));
+        }
+    }else{
+        qDebug() << "move_reasons error: "<< vertex <<": "<<reply;
+    }
+    return ret;
+}
+
 bool MainWindow::list_stones(QString color){
     //qDebug() << "list_stones... color:" << color <<" verticies:" <<verticies;
     bool ret = false;
@@ -295,6 +311,16 @@ bool MainWindow::play(QString color, QString vertex){
         ret = true;
     }
     return ret;
+}
+
+bool MainWindow::new_score(){
+    bool ret = false;
+    QByteArray reply = engine.write( QString("new_score"));
+    if(successful( reply )){
+        ret=true;
+        statusBar()->showMessage(QString(reply));
+    }
+   return ret;
 }
 
 bool MainWindow::fixed_handicap(int handicap){
@@ -489,7 +515,14 @@ void MainWindow::on_actionHistory_toggled(bool arg1)
 void MainWindow::on_lineCommand_returnPressed()
 {
     if( engine.is_running ){
-        engine.write( QByteArray( ui->lineCommand->text().toLatin1() ));
+        QStringList commands = ui->lineCommand->text().split("\n");
+        for(int i=0; i<commands.length();i++){
+             engine.write( QByteArray( commands.at(i).toLatin1() ));
+        }
+    if(ui->lineCommand->text().contains("play", Qt::CaseInsensitive) || ui->lineCommand->text().contains("genmove",Qt::CaseInsensitive)){
+        list_stones("black");
+        list_stones("white");
+    }
         ui->lineCommand->clear();
     }else{
         ui->textHistory->appendHtml("<b>GNU Go Engine Not Running</b>");
@@ -505,23 +538,21 @@ void MainWindow::on_actionAutoplay_triggered()
 
 void MainWindow::on_gameBoard_customContextMenuRequested(const QPoint &pos)
 {
-    qDebug() << "TODO context menu requested at:"<<pos;
-    /* The gameBoard may not be the right thing to attach the menu to since it might
-     * prevent the scene and graphic items from having context menus which is probably
-     * what I really want.
-     * Also, once menu is opened, a left click on the board crashes the program, whether
-     * I delete rightClickItem or not.
-    qDebug()<<"context menu requested";
     QMenu submenu;
-    QPoint item = ui->gameBoard->mapToGlobal(pos);
-    submenu.addAction("Add");
-    submenu.addAction("Delete");
+    QPoint item = mapToGlobal(pos);
+    QString vertex;
+    submenu.addAction("Move Reasons");
+//    submenu.addAction("Delete");
     QAction* rightClickItem = submenu.exec(item);
     qDebug() << "context menu item "<< rightClickItem->text()<< " clicked";
-    delete rightClickItem;
+    vertex = ui->gameBoard->posToAlphaNum(ui->gameBoard->mapToScene(pos));
 
-*/
+    if( rightClickItem->text() == "Move Reasons"){
+        move_reasons(vertex);
+    }
+
 }
+
 void MainWindow::setBlackName(QString name){
     this->blackName = name;
     ui->labelBlack->setText(QString("%1 (Black)").arg(name));

@@ -96,8 +96,13 @@ public:
     QPixmap backgroundPM;
     QGraphicsPixmapItem* boardBackground;
     QGraphicsPixmapItem* pseudoCursor;
+
+    public slots:
+    void doMenu(QPoint p);
+
 signals:
     void boardLeftClicked(QString color, QString vertex);
+
 
 protected:
     void	resizeEvent(QResizeEvent *event);

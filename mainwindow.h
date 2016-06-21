@@ -76,6 +76,8 @@ public:
     bool play(QString color, QString vertex);
     bool genmove(QString color);
     bool list_stones(QString color);
+    bool move_reasons(QString vertex);
+    bool new_score();
     bool top_moves(QString color);
     bool fixed_handicap(int handicap);
     bool boardsize(int size);

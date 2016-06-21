@@ -1,11 +1,14 @@
 ﻿#include "goboard.h"
 #include<QtGlobal>
+#include<QMenu>
 #include <QGraphicsSceneMoveEvent>
 
 GoBoard::GoBoard(QWidget *parent = 0) : QGraphicsView(parent)
 {
     scene = new QGraphicsScene(-GO_BORDER_SIZE, -GO_BORDER_SIZE, GO_BOARD_SIZE, GO_BOARD_SIZE,this);
     setScene(scene);
+    //connect(scene, SIGNAL(contextMenuEvent(QGraphicsSceneContextMenuEvent)), this, SLOT(doMenu(QGraphicsSceneContextMenuEvent)));
+    connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(doMenu(QPoint)));
 
     backgroundPM = QPixmap("WoodBoard1.png");
     whiteStonePM = QPixmap("WhiteStone.png");
@@ -136,6 +139,7 @@ void GoBoard::showTopMoves(QString color, QStringList verticies){
     pen.setWidth(10);
     pen.setCosmetic(true);
     QFont font =QFont("Arial", 8, 9 );
+    QFont big_font = QFont("Arial", 15, 10);
         QBrush brush(QColor(0,0,0,127));
     for(int i=0; i<verticies.length(); i+=2){//every other is a score
         //QString strength = QString("%1 %2").arg(verticies[i]).arg(verticies[i+1]);
@@ -147,13 +151,29 @@ void GoBoard::showTopMoves(QString color, QStringList verticies){
           center(tx, pt);
 
         QGraphicsEllipseItem *el = scene->addEllipse( tx->sceneBoundingRect() ,pen,brush);
+QGraphicsSimpleTextItem *tx2 = scene->addSimpleText( QString("%1 %2").arg(verticies[i]).arg(verticies[i+1]), big_font);
+tx2->setPos(1100.0, i*20.0);
+          tx2->setBrush(QColor(Qt::white));
 
         el->setToolTip(strength);
         gig->addToGroup(el);
         gig->addToGroup(tx);
+        gig->addToGroup(tx2);
     }
     scene->addItem(gig);
     markers.insert(marker_name, gig);
+}
+void GoBoard::doMenu(QPoint p){
+    /*
+    qDebug() << "Gameboard TODO context menu requested at:"<<p;
+    QMenu submenu;
+    QPoint item = mapToGlobal(p);
+    submenu.addAction("Add");
+    submenu.addAction("Delete");
+    QAction* rightClickItem = submenu.exec(item);
+    qDebug() << posToAlphaNum(mapToScene(p));
+    //delete rightClickItem;
+    */
 }
 
 void GoBoard::removeMarkers(QString name){
