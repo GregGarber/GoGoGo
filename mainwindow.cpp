@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent) :
         QMainWindow(parent),
@@ -399,41 +400,37 @@ void MainWindow::on_actionNew_Game_triggered()
     if(!engine.is_running){
         engine.start();
     }
+    //might want option to resume last game
     engine.write("clear_board");
     boardsize( ui->gameBoard->boardSize );
-    /*
-    QByteArray cmd("boardsize ");
-    cmd.append(QString("%1").arg(ui->gameBoard->boardSize));
-    engine.write(cmd);
-    */
     ui->gameBoard->clearBoard();
+    komi(komi_value);
 
     fixed_handicap(handicap);
-    /*
-    cmd.clear();
-    cmd.append(QString("fixed_handicap %1").arg(handicap));
-    engine.write(cmd);
-
-    cmd.clear();
-    cmd.append(QString("komi %1").arg(komi));
-    engine.write(cmd);
-    */
-    komi(komi_value);
+    if(handicap>1) genmove("white");//white gets 1st move if > 1 handicap stone
 }
 
 void MainWindow::on_actionSave_Game_triggered()
 {
-
+    //oddly, command is like: printsgf filename.sgf
 }
 
 void MainWindow::on_actionSave_Game_As_triggered()
 {
+    //oddly, command is like: printsgf filename.sgf
 
+    fileName = QFileDialog::getSaveFileName(this, tr("Save Game"),"./", tr("SGF Files (*.sgf"));
 }
 
 void MainWindow::on_actionOpen_triggered()
 {
-
+    /*
+    loadsgf ../build-GoGoGo-Qt_5_6_0-Debug/wtf.sgf
+    = white
+    dialog doesn't seem to understand ~/
+    QFileDialog::
+            */
+    fileName = QFileDialog::getOpenFileName(this, tr("Open Game"), "~/", tr("SGF Files (*.sgf);;All Files (*.*)"));
 }
 
 void MainWindow::on_actionQuit_triggered()

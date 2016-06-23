@@ -140,22 +140,26 @@ void GoBoard::showTopMoves(QString color, QStringList verticies){
     pen.setCosmetic(true);
     QFont font =QFont("Arial", 8, 9 );
     QFont big_font = QFont("Arial", 15, 10);
-        QBrush brush(QColor(0,0,0,127));
+    QBrush brush(QColor(0,0,0,127));
     for(int i=0; i<verticies.length(); i+=2){//every other is a score
-        //QString strength = QString("%1 %2").arg(verticies[i]).arg(verticies[i+1]);
-        QString strength = QString(" %1 ").arg(verticies[i+1]);
-    font.setPixelSize((int)((float)gridSizePixels/(float)strength.length())*2);
-        pt = alphaNumToPos(verticies[i]);
-          QGraphicsSimpleTextItem *tx = scene->addSimpleText(strength, font);
-          tx->setBrush(QColor(Qt::white));
-          center(tx, pt);
+                if(i+2>verticies.length()){
+                    qDebug()<<" showTopMoves: something went wrong i="<<i<<" vertices.length()="<<verticies.length();
+                    qDebug() << verticies;
+                    break;
+                }
+        QString strength = QString(" %1 ").arg(verticies.at(i+1));
+        font.setPixelSize((int)((float)gridSizePixels/(float)strength.length())*2);
+        pt = alphaNumToPos(verticies.at(i));
+        QGraphicsSimpleTextItem *tx = scene->addSimpleText(strength, font);
+        tx->setBrush(QColor(Qt::white));
+        center(tx, pt);
 
         QGraphicsEllipseItem *el = scene->addEllipse( tx->sceneBoundingRect() ,pen,brush);
-QGraphicsSimpleTextItem *tx2 = scene->addSimpleText( QString("%1 %2").arg(verticies[i]).arg(verticies[i+1]), big_font);
-tx2->setPos(1100.0, i*20.0);
-          tx2->setBrush(QColor(Qt::white));
+        QGraphicsSimpleTextItem *tx2 = scene->addSimpleText( QString("%1 %2").arg(verticies.at(i)).arg(verticies.at(i+1)), big_font);
+        tx2->setPos(1100.0, i*20.0);
+        tx2->setBrush(QColor(Qt::white));
 
-        el->setToolTip(strength);
+        el->setToolTip(QString("%1 %2").arg(verticies.at(i)).arg(verticies.at(i+1)));
         gig->addToGroup(el);
         gig->addToGroup(tx);
         gig->addToGroup(tx2);

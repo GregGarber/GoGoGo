@@ -19,6 +19,7 @@ public:
     GTPEngineProcess engine;
     Settings settings;
     QSettings config;
+    QString fileName;
     void readSettings();
     void writeSettings();
     void setBlackName(QString name);
