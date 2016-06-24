@@ -363,6 +363,36 @@ bool MainWindow::komi(qreal komi){
     return ret;
 }
 
+bool MainWindow::printsgf(QString filename){
+    //oddly, command is like: printsgf filename.sgf
+    bool ret = false;
+    QByteArray reply = engine.write( QString("printsgf %1").arg(filename));
+    if(successful( reply )){
+        ret=true;
+    }else{
+        qDebug() << "printsgf: "<< reply;
+    }
+    return ret;
+}
+
+bool MainWindow::loadsgf(QString filename, QString &color){
+    //loadsgf ../build-GoGoGo-Qt_5_6_0-Debug/wtf.sgf
+    bool ret = false;
+    QByteArray reply = engine.write( QString("loadsgf %1").arg(filename));
+    if(successful( reply )){
+    QRegularExpression re(commonREs.value("word"));
+    QRegularExpressionMatch match = re.match(reply);
+        //IIRC, it actually returns a color, so probably should set proper turn
+    if (match.hasMatch()) {
+        color = match.captured("word");
+        ret=true;
+    }
+    }else{
+        qDebug() << "loadsgf: "<< reply;
+    }
+    return ret;
+}
+
 void MainWindow::updateBlackScore(){
     if(black_score.length()>0){
         ui->labelBlack->setText(QString("B %1 capt:%2 %3").arg(blackName).arg(black_captures).arg(black_score));
@@ -413,24 +443,32 @@ void MainWindow::on_actionNew_Game_triggered()
 void MainWindow::on_actionSave_Game_triggered()
 {
     //oddly, command is like: printsgf filename.sgf
+    if(fileName.length() > 0){
+        printsgf(fileName);
+    }else{
+        on_actionSave_Game_As_triggered();
+    }
 }
 
 void MainWindow::on_actionSave_Game_As_triggered()
 {
     //oddly, command is like: printsgf filename.sgf
-
     fileName = QFileDialog::getSaveFileName(this, tr("Save Game"),"./", tr("SGF Files (*.sgf"));
+    printsgf(fileName);
 }
 
 void MainWindow::on_actionOpen_triggered()
 {
-    /*
-    loadsgf ../build-GoGoGo-Qt_5_6_0-Debug/wtf.sgf
-    = white
-    dialog doesn't seem to understand ~/
-    QFileDialog::
-            */
+    //loadsgf ../build-GoGoGo-Qt_5_6_0-Debug/wtf.sgf
+    //= white
+    QString color;
     fileName = QFileDialog::getOpenFileName(this, tr("Open Game"), "~/", tr("SGF Files (*.sgf);;All Files (*.*)"));
+    if(loadsgf(fileName, color)){
+        //FIXME should set game to color's turn
+        ui->gameBoard->clearBoard();
+        list_stones("black");
+        list_stones("white");
+    }
 }
 
 void MainWindow::on_actionQuit_triggered()

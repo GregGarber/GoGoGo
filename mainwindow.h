@@ -43,6 +43,7 @@ public:
         {"cmd","^(?<cmd>\\w+)"},
         {"sgf_score","(?<color>\\w|0)\\+(?<score>[.\\d]+|\\w+)"}, // read: "= B+111.5\n\n"
         {"int","(?<int>\\d+)"},
+        {"word","(?<word>\\w+)"},
         {"vertex","(?<vertex>\\w\\s?\\d\\d?)"},
         {"verticies","(\\w\\s?[.\\d]+)+"}
     };
@@ -90,6 +91,8 @@ public:
     void resetPass(QString color);
     void updatePass(QString color);
     void final_score();
+    bool printsgf(QString filename);
+    bool loadsgf(QString filename, QString &color);
 public slots:
     void doPlay(QString color, QString vertex);
     void engineStarted();
