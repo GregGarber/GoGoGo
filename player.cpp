@@ -6,13 +6,11 @@ Player::Player(QObject *parent) : QObject(parent)
 }
 
 void Player::setName(QString name){
-    this->blackName = name;
-    ui->labelBlack->setText(QString("%1 (Black)").arg(name));
+    this->name = name;
 }
 
-void Player::setSpecies(QString name){
-    this->blackName = name;
-    ui->labelBlack->setText(QString("%1 (Black)").arg(name));
+void Player::setSpecies(QString species){
+    this->species = species;
 }
 
 void Player::setHandicap(int handicap){

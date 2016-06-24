@@ -13,6 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     engine.addProgramArg("--mode gtp");
     engine.start();
+    gtp.setEngine(engine);
 }
 
 MainWindow::~MainWindow()
@@ -26,14 +27,14 @@ void MainWindow::engineStarted(){
 }
 
 void MainWindow::doPlay(QString color, QString vertex){
-    if(play(color, vertex)){
-        genmove( otherColor(color) );
-        new_score();
-        if( ui->buttonHint->isChecked()) top_moves(color);
+    if(gtp.play(color, vertex)){
+        gtp.genmove( players.otherColor(color) );
+        gtp.new_score();
+        if( ui->buttonHint->isChecked()) gtp.top_moves(color);
     }
 }
 
-
+/*
 void MainWindow::updateBlackScore(){
     if(black_score.length()>0){
         ui->labelBlack->setText(QString("B %1 capt:%2 %3").arg(blackName).arg(black_captures).arg(black_score));
@@ -49,20 +50,21 @@ void MainWindow::updateWhiteScore(){
         ui->labelWhite->setText(QString("W %1 capt:%2 ").arg(whiteName).arg(white_captures));
     }
 }
+*/
 
 void MainWindow::on_buttonHint_clicked()
 {
-    top_moves("black");
+    gtp.top_moves("black");
 }
 
 void MainWindow::on_buttonPass_clicked()
 {
-    pass("black");
+    gtp.pass("black");
 }
 
 void MainWindow::on_buttonResign_clicked()
 {
-    resign("black");
+   // gtp.resign("black");
 }
 
 void MainWindow::on_actionNew_Game_triggered()
@@ -72,19 +74,19 @@ void MainWindow::on_actionNew_Game_triggered()
     }
     //might want option to resume last game
     engine.write("clear_board");
-    boardsize( ui->gameBoard->boardSize );
+    gtp.boardsize( ui->gameBoard->boardSize );
     ui->gameBoard->clearBoard();
-    komi(komi_value);
+    //komi(komi_value);
 
-    fixed_handicap(handicap);
-    if(handicap>1) genmove("white");//white gets 1st move if > 1 handicap stone
+    //fixed_handicap(handicap);
+    //if(handicap>1) genmove("white");//white gets 1st move if > 1 handicap stone
 }
 
 void MainWindow::on_actionSave_Game_triggered()
 {
     //oddly, command is like: printsgf filename.sgf
     if(fileName.length() > 0){
-        printsgf(fileName);
+        gtp.printsgf(fileName);
     }else{
         on_actionSave_Game_As_triggered();
     }
@@ -94,7 +96,7 @@ void MainWindow::on_actionSave_Game_As_triggered()
 {
     //oddly, command is like: printsgf filename.sgf
     fileName = QFileDialog::getSaveFileName(this, tr("Save Game"),"./", tr("SGF Files (*.sgf"));
-    printsgf(fileName);
+    gtp.printsgf(fileName);
 }
 
 void MainWindow::on_actionOpen_triggered()
@@ -103,11 +105,11 @@ void MainWindow::on_actionOpen_triggered()
     //= white
     QString color;
     fileName = QFileDialog::getOpenFileName(this, tr("Open Game"), "~/", tr("SGF Files (*.sgf);;All Files (*.*)"));
-    if(loadsgf(fileName, color)){
+    if(gtp.loadsgf(fileName, color)){
         //FIXME should set game to color's turn
         ui->gameBoard->clearBoard();
-        list_stones("black");
-        list_stones("white");
+        gtp.list_stones("black");
+        gtp.list_stones("white");
     }
 }
 
@@ -132,7 +134,7 @@ void MainWindow::on_actionOpen_Recent_triggered()
 
 void MainWindow::on_actionUndo_triggered()
 {
-    undo(1);
+    gtp.undo(1);
 }
 
 void MainWindow::on_actionRedo_triggered()
@@ -148,7 +150,7 @@ void MainWindow::on_actionPreferences_triggered()
 
 void MainWindow::on_actionUndo_2_triggered()
 {
-    undo(1);
+    gtp.undo(1);
 }
 
 void MainWindow::on_actionRedo_2_triggered()
@@ -195,8 +197,8 @@ void MainWindow::on_lineCommand_returnPressed()
              engine.write( QByteArray( commands.at(i).toLatin1() ));
         }
     if(ui->lineCommand->text().contains("play", Qt::CaseInsensitive) || ui->lineCommand->text().contains("genmove",Qt::CaseInsensitive)){
-        list_stones("black");
-        list_stones("white");
+        gtp.list_stones("black");
+        gtp.list_stones("white");
     }
         ui->lineCommand->clear();
     }else{
@@ -223,7 +225,7 @@ void MainWindow::on_gameBoard_customContextMenuRequested(const QPoint &pos)
     vertex = ui->gameBoard->posToAlphaNum(ui->gameBoard->mapToScene(pos));
 
     if( rightClickItem->text() == "Move Reasons"){
-        move_reasons(vertex);
+        gtp.move_reasons(vertex);
     }
 
 }

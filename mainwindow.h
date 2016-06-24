@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include "gtpengineprocess.h"
 #include "settings.h"
+#include "gtp.h"
+#include "playerwrapper.h"
 
 namespace Ui {
 class MainWindow;
@@ -18,6 +20,8 @@ public:
     ~MainWindow();
     bool game_over = false;
     GTPEngineProcess engine;
+    GTP gtp;
+    PlayerWrapper players;
     int moves =0;
     QSettings config;
     QString fileName;

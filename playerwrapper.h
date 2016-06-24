@@ -11,11 +11,11 @@ class PlayerWrapper : public QObject
 public:
     explicit PlayerWrapper(QObject *parent = 0);
 
-    Player* black();
-    Player* current();
-    Player* last();
-    Player* next();
-    Player* white();
+    Player* getBlack();
+    Player* getCurrent();
+    Player* getLast();
+    Player* getNext();
+    Player* getWhite();
     void resetPass(PlayerColors player);
     void setCurrentPlayer(PlayerColors player);
     void takeTurn();
@@ -27,10 +27,6 @@ public:
     void resetPass(QString color);
     void updatePass(QString color);
 
-    enum PlayerColors{
-        Black,
-        White
-    };
 
 signals:
 
@@ -43,7 +39,8 @@ protected:
     Player* white;
     Player* black;
     Player* current;
-    Player* last, next;
+    Player* last;
+    Player* next;
 };
 
 #endif // PLAYERWRAPPER_H

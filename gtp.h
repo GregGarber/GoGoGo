@@ -9,26 +9,28 @@ class GTP : public QObject
 {
     Q_OBJECT
 public:
-    GTPEngineProcess engine;
+    explicit GTP(QObject *parent = 0);
+
+    GTPEngineProcess* engine;
     QSettings config;
 
+    void setEngine(GTPEngineProcess &engine);
     bool boardsize(int size);
-    bool captures(QString color);
-    bool fixed_handicap(int handicap);
-    bool genmove(QString color);
+    int captures(QString color);
+    QStringList fixed_handicap(int handicap);
+    QString genmove(QString color);
     bool komi(qreal komi);
-    bool list_stones(QString color);
+    QStringList list_stones(QString color);
     bool loadsgf(QString filename, QString &color);
-    bool move_reasons(QString vertex);
-    bool new_score();
+   QStringList move_reasons(QString vertex);
+    QString new_score();
     bool pass(QString color);
     bool play(QString color, QString vertex);
     bool printsgf(QString filename);
     bool resign(QString color);
     bool successful(QByteArray reply);
-    bool top_moves(QString color);
+    QStringList top_moves(QString color);
     bool undo(int moves);
-    explicit GTP(QObject *parent = 0);
     int getInt(QByteArray reply, bool &found);
     QString getVertex(QByteArray reply, bool &found);
     QStringList getVerticies(QByteArray reply, bool &found);
