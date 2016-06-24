@@ -17,12 +17,18 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     goboard.cpp \
     gtpengineprocess.cpp \
-    settings.cpp
+    settings.cpp \
+    gtp.cpp \
+    player.cpp \
+    playerwrapper.cpp
 
 HEADERS  += mainwindow.h \
     goboard.h \
     gtpengineprocess.h \
-    settings.h
+    settings.h \
+    gtp.h \
+    player.h \
+    playerwrapper.h
 
 FORMS    += mainwindow.ui \
     settings.ui
