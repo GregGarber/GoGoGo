@@ -108,6 +108,7 @@ QString GoBoard::posToAlphaNum(QPointF point){
 }
 
 void GoBoard::checkStones(QString color, QStringList verticies){
+    qDebug() << "checkStones("<<color<<", "<<verticies<<")";
    foreach (const QString &str, stoneHouse.keys()){
        if(stoneHouse[str].getStoneColor() == color){
            if( !verticies.contains(str)) {
@@ -118,13 +119,13 @@ void GoBoard::checkStones(QString color, QStringList verticies){
    }
    foreach(const QString &str, verticies){
        if(!stoneHouse.contains(str)){
-           placeStone(str, color);
+           placeStone(color, str);
            qDebug() << "Add Missing STONE: "<< color << " " << str;
        }else{
            if(stoneHouse[str].getStoneColor() != color){
            qDebug() << "FIX miscolored STONE: "<< color << " " << str;
                removeStone(str);
-               placeStone(str, color);
+               placeStone( color, str);
            }
        }
    }
@@ -136,11 +137,22 @@ void GoBoard::showTopMoves(QString color, QStringList verticies){
     QString marker_name = QString("%1_hints").arg(color);
     removeMarkers(marker_name);
     QGraphicsItemGroup *gig = new QGraphicsItemGroup(boardBackground);
-    pen.setWidth(10);
+    pen.setWidth(1);
     pen.setCosmetic(true);
     QFont font =QFont("Arial", 8, 9 );
     QFont big_font = QFont("Arial", 15, 10);
     QBrush brush(QColor(0,0,0,127));
+    big_font.setUnderline(true);
+    big_font.setPointSize(12);
+        QGraphicsSimpleTextItem *heading = scene->addSimpleText( QString("%1 Hints\nVertex\tRating").arg(color.toUpper()), big_font);
+        heading->setPos(1050.0, -75.0);
+    if(color=="white"){
+        heading->setBrush(QColor(Qt::white));
+    }else{
+        heading->setBrush(QColor(Qt::black));
+    }
+    big_font.setUnderline(false);
+    big_font.setPointSize(15);
     for(int i=0; i<verticies.length(); i+=2){//every other is a score
                 if(i+2>verticies.length()){
                     qDebug()<<" showTopMoves: something went wrong i="<<i<<" vertices.length()="<<verticies.length();
@@ -155,13 +167,18 @@ void GoBoard::showTopMoves(QString color, QStringList verticies){
         center(tx, pt);
 
         QGraphicsEllipseItem *el = scene->addEllipse( tx->sceneBoundingRect() ,pen,brush);
-        QGraphicsSimpleTextItem *tx2 = scene->addSimpleText( QString("%1 %2").arg(verticies.at(i)).arg(verticies.at(i+1)), big_font);
+        QGraphicsSimpleTextItem *tx2 = scene->addSimpleText( QString("%1\t%2").arg(verticies.at(i).toUpper()).arg(verticies.at(i+1)), big_font);
         tx2->setPos(1100.0, i*20.0);
+    if(color=="white"){
         tx2->setBrush(QColor(Qt::white));
+    }else{
+        tx2->setBrush(QColor(Qt::black));
+    }
 
         el->setToolTip(QString("%1 %2").arg(verticies.at(i)).arg(verticies.at(i+1)));
         gig->addToGroup(el);
         gig->addToGroup(tx);
+        gig->addToGroup(heading);
         gig->addToGroup(tx2);
     }
     scene->addItem(gig);
@@ -251,7 +268,7 @@ QPointF GoBoard::alphaNumToPos(QString alphanum){
    return QPoint(x,y);
 }
 
-void GoBoard::placeStone(QString location, QString color){
+void GoBoard::placeStone( QString color, QString location){
     location = location.trimmed().toLower();
     color = color.trimmed().toLower();
     Stone stone;

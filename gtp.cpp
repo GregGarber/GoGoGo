@@ -24,7 +24,11 @@ QStringList GTP::top_moves(QString color){
     QByteArray reply = engine->write( QString("top_moves_%1").arg(color));
     if(successful( reply )){
         verticies = getVerticies(reply, ok);
-        if(!ok) qDebug() << "Error: top_moves_"<< color <<" "<<reply;
+        if(!ok) {
+            qDebug() << "Error: top_moves_"<< color <<" "<<reply;
+        }else{
+            emit hints(color, verticies);
+        }
     }
     return verticies;
 }
@@ -36,7 +40,11 @@ int GTP::captures(QString color){
     QByteArray reply = engine->write( QString("captures %1").arg(color));
     if(successful( reply )){
         captures = getInt(reply, ok);
-        if(!ok) qDebug() << "Error: captures " << color << " "<< reply;
+        if(!ok) {
+            qDebug() << "Error: captures " << color << " "<< reply;
+        }else{
+            emit captureCount(color, captures);
+        }
     }
     return captures;
 }
@@ -74,11 +82,11 @@ bool GTP::pass(QString color){
 "W+score" for a white win, e.g. "B+2.5", "W+64" or "B+0.5"
 "B+R"/"B+Resign" and "W+R"/"W+Resign" for a win by resignation.
 You MUST NOT write "Black resigns" // assuming this means in file format?
+*/
 void GTP::final_score(){
     QByteArray reply = engine->write( QString("final_score"));
+    QString white_score, black_score;
     if(successful( reply )){
-        game_over = true;
-        ui->textHistory->appendPlainText(QString(reply));
         QRegularExpression re(commonREs.value("sgf_score"));
         QRegularExpressionMatch match = re.match(reply);
         QString  color, score;
@@ -104,12 +112,11 @@ void GTP::final_score(){
                     white_score="Draw (jigo)";
                 }
             }
-                    updateBlackScore();
-                    updateWhiteScore();
+            emit blackScore(black_score);
+            emit whiteScore(white_score);
         }
     }
 }
-*/
 
     /* Can't figure out how to do resign. genmove can return it, but play can't send it.
 bool GTP::resign(QString color){
@@ -142,7 +149,11 @@ QStringList GTP::list_stones(QString color){
     QByteArray reply = engine->write( QString("list_stones %1").arg(color));
     if(successful( reply )){
         verticies = getVerticies(reply, ok);
-        if(!ok) qDebug() << "list_stones: "<< color <<" "<<reply;
+        if(!ok){
+            qDebug() << "list_stones: "<< color <<" "<<reply;
+        }else{
+            emit stoneListing(color, verticies);
+        }
     }
     return verticies;
 }
@@ -191,8 +202,19 @@ QString GTP::genmove(QString color){
     QString vertex;
     QByteArray reply =  engine->write(QString("genmove %1").arg(color));
     if( successful( reply)){
-       vertex = getVertex(reply, ok);
-       if(!ok) qDebug() << "Error: genmove " << color << " " << reply;
+        vertex = getVertex(reply, ok);
+        if(!ok) {
+            QString something = QString(reply).toLower();
+            if(something.contains("pass", Qt::CaseInsensitive)  ){
+                vertex = "pass";
+            }else if(something.contains("resign", Qt::CaseInsensitive)){
+                vertex = "resign";
+            }else{
+                qDebug() << "Error: genmove " << color << " " << reply;
+            }
+        }else{
+            emit move(color, vertex);
+        }
     }
     return vertex;
 }
@@ -230,17 +252,25 @@ bool GTP::play(QString color, QString vertex){
     bool ret=false;
     if( successful(engine->write(cmd))){
         ret = true;
+        emit move(color, vertex);
     }
     return ret;
 }
 
 QString GTP::new_score(){
-    QString ret;
+    QString ret, white_score, black_score;
     QByteArray reply = engine->write( QString("new_score"));
     if(successful( reply )){
         ret = QString(reply);
+        if(ret.contains("b", Qt::CaseInsensitive)){
+            black_score = ret;
+        }else{
+            white_score = ret;
+        }
+        emit blackScore(black_score);
+        emit whiteScore(white_score);
     }
-   return ret;
+    return ret;
 }
 
 QStringList GTP::fixed_handicap(int handicap){
@@ -251,6 +281,8 @@ QStringList GTP::fixed_handicap(int handicap){
         verticies = getVerticies(reply, ok);
         if(!ok){
             qDebug() << "fixed_handicap: "<< handicap <<" "<<reply;
+        }else{
+            emit stoneListing("black", verticies);
         }
     }
     return verticies;

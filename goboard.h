@@ -26,10 +26,6 @@ public:
     void drawBoard();
     QPointF alphaNumToPos(QString alphanum);
     QString posToAlphaNum(QPointF point);
-    void placeStone(QString location, QString color);
-    void removeStone(QString location);
-    void checkStones(QString color, QStringList verticies);
-    void showTopMoves(QString color, QStringList verticies);
     bool hasStone(QString location);
     void clearBoard();
     void removeMarkers(QString name);
@@ -99,6 +95,10 @@ public:
 
     public slots:
     void doMenu(QPoint p);
+    void placeStone(QString color, QString location);
+    void removeStone(QString location);
+    void checkStones(QString color, QStringList verticies);
+    void showTopMoves(QString color, QStringList verticies);
 
 signals:
     void boardLeftClicked(QString color, QString vertex);

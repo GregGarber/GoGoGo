@@ -19,6 +19,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     bool game_over = false;
+    QTimer computer_timer;
     GTPEngineProcess engine;
     GTP gtp;
     PlayerWrapper players;
@@ -28,14 +29,19 @@ public:
     Settings settings;
 
     void readSettings();
-    void updateBlackScore();
-    void updateWhiteScore();
     void writeSettings();
 
+signals:
+    void gameOver(QString reason);
 
 public slots:
     void doPlay(QString color, QString vertex);
     void engineStarted();
+    void updateBlackScore(QString score);
+    void updateWhiteScore(QString score);
+    void setGameOver(QString reason);
+    void computerPlay();
+    void moveHistory(QString color, QString vertex);
 
 private slots:
     void on_buttonHint_clicked();

@@ -4,6 +4,8 @@ PlayerWrapper::PlayerWrapper(QObject *parent) : QObject(parent)
 {
     white = new Player();
     black = new Player();
+    white->setColor(White);
+    black->setColor(Black);
     current = white;
     next = black;
     last = black;
@@ -30,40 +32,91 @@ Player* PlayerWrapper::getLast(){
     return last;
 }
 
-QString PlayerWrapper::otherColor(QString color){
-    return (color.toLower() == "black") ? "white":"black";
-}
-
-void  PlayerWrapper::resetPass(QString color){
-    if(color == "black"){
-        black->is_passing = false;
+void PlayerWrapper::setHandicap(int h){
+    black->setHandicap(h);
+    if(h>1){
+        setCurrentPlayer(White);
     }else{
-        white->is_passing = false;
+        setCurrentPlayer(Black);
     }
 }
 
-void PlayerWrapper::updatePass(QString color){
-    if(color == "black"){
-        black->is_passing = true;
+void PlayerWrapper::setCurrentPlayer(PlayerColors player){
+    if( current->getPlayerColor() == player ) return;
+    if(player == Black){
+        current = black;
+        next = white;
+        last = white;
     }else{
-        white->is_passing = true;
+        current = white;
+        next = black;
+        last = black;
     }
-    /*
-    if(is_black_passing == true && is_white_passing==true){
-        game_over = true;
-        final_score();
+}
+
+void PlayerWrapper::swap(){
+    if( current->getPlayerColor() == Black){
+        current = white;
+        next = black;
+        last = black;
+    }else{
+        current = black;
+        next = white;
+        last =white;
     }
-    */
+}
+
+void PlayerWrapper::setCaptures(int captures){
+    current->setCaptures(captures);
+}
+
+void PlayerWrapper::setCaptures(QString color, int captures){
+    if(color == "black"){
+        black->setCaptures(captures);
+    }else{
+        white->setCaptures(captures);
+    }
+}
+
+void PlayerWrapper::setCurrentPass(){
+    getCurrent()->setIsPassing(true);
+}
+
+void PlayerWrapper::setCurrentPlays(){
+    getCurrent()->setIsPassing(false);
+    getCurrent()->setResigned(false);
+}
+
+bool PlayerWrapper::getMutalPass(){
+    return (getCurrent()->getIsPassing() && getNext()->getIsPassing());
+}
+
+
+QString PlayerWrapper::getGameOver(){
+        //FIXME sort of guessing at these conditions
+    QString ret;
+        if(getMutalPass()){
+            ret = "Mutal Pass";
+        }else if(getCurrent()->getResigned() && getLast()->getResigned()){
+            ret = "Mutal Resign";
+        }else if(getCurrent()->getIsPassing() && getLast()->getResigned()){
+            ret = QString("%s Passed and %s Resigned").arg(getCurrent()->getColorString()).arg(getLast()->getColorString());
+        }
+    return ret;
+}
+
+void PlayerWrapper::setCurrentResigned(){
+    getCurrent()->setResigned(true);
 }
 
 void PlayerWrapper::readSettings()
 {
     config.beginGroup("Players");
     black->setName(config.value("black_name").toString());
-    white->setName(config.value("white_name").toString());
     black->setSpecies (config.value("black_species").toString());
+    black->setHandicap(config.value("handicap").toInt());
+    white->setName(config.value("white_name").toString());
     white->setSpecies(config.value("white_species").toString());
     white->setKomi(config.value("komi").toDouble());
-    black->setHandicap(config.value("handicap").toInt());
     config.endGroup();
 }

@@ -52,6 +52,12 @@ public:
     };
 
 signals:
+    void move(QString color, QString vertex);
+    void captureCount(QString color, int total_captures);
+    void stoneListing(QString color, QStringList verticies);
+    void hints(QString color, QStringList vert_scores);
+    void blackScore(QString score);
+    void whiteScore(QString score);
 
 public slots:
 };

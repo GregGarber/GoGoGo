@@ -16,17 +16,16 @@ public:
     Player* getLast();
     Player* getNext();
     Player* getWhite();
-    void resetPass(PlayerColors player);
     void setCurrentPlayer(PlayerColors player);
-    void takeTurn();
-    void updatePass(PlayerColors player);
-
-    //retire these
-    QString otherColor(QString color);
-    QString lastPlayer;
-    void resetPass(QString color);
-    void updatePass(QString color);
-
+    void swap();
+    void setCaptures(int captures);
+    void setCaptures(QString color, int captures);
+    void setHandicap(int h);
+    void setCurrentPass();
+    void setCurrentPlays();
+    bool getMutalPass();
+    QString getGameOver();
+    void setCurrentResigned();
 
 signals:
 
