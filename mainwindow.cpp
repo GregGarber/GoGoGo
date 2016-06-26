@@ -11,6 +11,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&computer_timer, SIGNAL(timeout()), this, SLOT(computerPlay()));
     connect(this, SIGNAL(gameOver(QString)), this, SLOT(setGameOver(QString)));
     connect(ui->gameBoard, SIGNAL(boardLeftClicked(QString,QString)),this,SLOT(doPlay(QString,QString)));
+    connect(&players, SIGNAL(blackScore(QString)), this, SLOT(updateBlackScore(QString)));
+    connect(&players, SIGNAL(whiteScore(QString)), this, SLOT(updateWhiteScore(QString)));
     connect(&gtp, SIGNAL(move(QString,QString)),ui->gameBoard,SLOT(placeStone(QString,QString)));
     connect(&gtp, SIGNAL(move(QString,QString)),this,SLOT(moveHistory(QString,QString)));
     connect(&gtp, SIGNAL(stoneListing(QString,QStringList)), ui->gameBoard, SLOT(checkStones(QString,QStringList)));
@@ -135,10 +137,14 @@ void MainWindow::on_actionNew_Game_triggered()
         engine.start();
     }
     game_over = false;
+    moves=1;
     //might want option to resume last game
     engine.write("clear_board");
     gtp.boardsize( ui->gameBoard->boardSize );
     ui->gameBoard->clearBoard();
+    ui->gameBoard->removeMarkers("black_hints");
+    ui->gameBoard->removeMarkers("white_hints");
+    ui->textHistory->clear();
     //komi(komi_value);
 
     QStringList stones = gtp.fixed_handicap( players.getBlack()->getHandicap());
@@ -204,6 +210,7 @@ void MainWindow::on_actionOpen_Recent_triggered()
 void MainWindow::on_actionUndo_triggered()
 {
     gtp.undo(1);
+    moves--;
 }
 
 void MainWindow::on_actionRedo_triggered()

@@ -7,6 +7,7 @@ int main(int argc, char *argv[])
     a.setOrganizationName("Geek-Ranch");
     a.setOrganizationDomain("geek-ranch.org");
     a.setApplicationName("GoGoGo");
+    a.setAttribute( Qt::AA_EnableHighDpiScaling, true);
     //QFile file(":/stylesheet.css");//not sure why broken
     QFile file("/home/g/prog/GoGoGo/stylesheet.css");
     if(file.open(QIODevice::ReadOnly | QIODevice::Text))

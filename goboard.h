@@ -20,6 +20,7 @@ class GoBoard: public QGraphicsView
 {
     Q_OBJECT
 public:
+    qreal pixelScale; //intended to scale for HDPI monitor. Not certain it is correct.
     GoBoard(QWidget *parent);
     bool isOnBoard(qreal i, qreal j);
     bool isOnBoard(QPointF j);

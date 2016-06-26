@@ -80,6 +80,11 @@ void PlayerWrapper::setCaptures(QString color, int captures){
 
 void PlayerWrapper::setCurrentPass(){
     getCurrent()->setIsPassing(true);
+    if(getCurrent()->getPlayerColor()==Black){
+        emit blackScore("Passed");
+    }else{
+        emit whiteScore("Passed");
+    }
 }
 
 void PlayerWrapper::setCurrentPlays(){
@@ -100,13 +105,18 @@ QString PlayerWrapper::getGameOver(){
         }else if(getCurrent()->getResigned() && getLast()->getResigned()){
             ret = "Mutal Resign";
         }else if(getCurrent()->getIsPassing() && getLast()->getResigned()){
-            ret = QString("%s Passed and %s Resigned").arg(getCurrent()->getColorString()).arg(getLast()->getColorString());
+            ret = QString("%1 Passed and %2 Resigned").arg(getCurrent()->getColorString()).arg(getLast()->getColorString());
         }
     return ret;
 }
 
 void PlayerWrapper::setCurrentResigned(){
     getCurrent()->setResigned(true);
+    if(getCurrent()->getPlayerColor()==Black){
+        emit blackScore("Resigned");
+    }else{
+        emit whiteScore("Resigned");
+    }
 }
 
 void PlayerWrapper::readSettings()

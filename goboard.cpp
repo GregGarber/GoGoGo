@@ -10,6 +10,7 @@ GoBoard::GoBoard(QWidget *parent = 0) : QGraphicsView(parent)
     //connect(scene, SIGNAL(contextMenuEvent(QGraphicsSceneContextMenuEvent)), this, SLOT(doMenu(QGraphicsSceneContextMenuEvent)));
     connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(doMenu(QPoint)));
 
+    pixelScale = this->devicePixelRatioF();
     backgroundPM = QPixmap("WoodBoard1.png");
     whiteStonePM = QPixmap("WhiteStone.png");
     blackStonePM = QPixmap("BlackStone.png");
@@ -37,10 +38,12 @@ GoBoard::GoBoard(QWidget *parent = 0) : QGraphicsView(parent)
     qreal j= pseudoCursor->sceneBoundingRect().height()/2.0;
     pseudoCursor->setData(PseudoCursorData::HALF_SIZE, QPointF(i,j));
 
+    /*
     redBrush = QBrush(Qt::red);
     redPen = QPen(redBrush,0);
     QGraphicsEllipseItem *el= scene->addEllipse(round(gridSizePixels*(qreal)(boardSize-1)), round(gridSizePixels*(qreal)(boardSize-1)), 10.0, 10.0, redPen, redBrush);
     center(el);
+    */
 }
 
 void GoBoard::center(auto *item){
@@ -132,18 +135,20 @@ void GoBoard::checkStones(QString color, QStringList verticies){
 }
 
 void GoBoard::showTopMoves(QString color, QStringList verticies){
+
     QPointF pt;
     QPen pen(QColor(Qt::GlobalColor::red));
     QString marker_name = QString("%1_hints").arg(color);
     removeMarkers(marker_name);
-    QGraphicsItemGroup *gig = new QGraphicsItemGroup(boardBackground);
+    //QGraphicsItemGroup *gig = new QGraphicsItemGroup(boardBackground);
+    QGraphicsItemGroup *gig = new QGraphicsItemGroup();
     pen.setWidth(1);
     pen.setCosmetic(true);
-    QFont font =QFont("Arial", 8, 9 );
-    QFont big_font = QFont("Arial", 15, 10);
+    QFont font =QFont("Arial", 8*pixelScale, 9 );
+    QFont big_font = QFont("Arial", 15*pixelScale, 10);
     QBrush brush(QColor(0,0,0,127));
     big_font.setUnderline(true);
-    big_font.setPointSize(12);
+    big_font.setPointSize(12*pixelScale);
         QGraphicsSimpleTextItem *heading = scene->addSimpleText( QString("%1 Hints\nVertex\tRating").arg(color.toUpper()), big_font);
         heading->setPos(1050.0, -75.0);
     if(color=="white"){
@@ -152,7 +157,7 @@ void GoBoard::showTopMoves(QString color, QStringList verticies){
         heading->setBrush(QColor(Qt::black));
     }
     big_font.setUnderline(false);
-    big_font.setPointSize(15);
+    big_font.setPointSize(15*pixelScale);
     for(int i=0; i<verticies.length(); i+=2){//every other is a score
                 if(i+2>verticies.length()){
                     qDebug()<<" showTopMoves: something went wrong i="<<i<<" vertices.length()="<<verticies.length();
@@ -209,7 +214,7 @@ void GoBoard::drawBoard(){
     QBrush brush = QBrush(Qt::black);
     QPen pen  = QPen(brush,5);
     QString s;
-    QFont font =QFont("Arial", 15, 9 );
+    QFont font =QFont("Arial", 15*pixelScale, 9 );
     QGraphicsTextItem *txt;
     font.setBold(true);
     for(qreal i=0.0; i < boardSize; i+=1.0){

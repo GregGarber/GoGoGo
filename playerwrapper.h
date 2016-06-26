@@ -28,6 +28,8 @@ public:
     void setCurrentResigned();
 
 signals:
+    void blackScore(QString score);
+    void whiteScore(QString score);
 
 public slots:
 
