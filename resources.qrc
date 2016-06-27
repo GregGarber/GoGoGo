@@ -11,6 +11,7 @@
         <file>images/WhiteStoneCursor.png</file>
     </qresource>
     <qresource prefix="/">
+        <file>images/Logo_128x128.png</file>
         <file>images/document-new.png</file>
         <file>images/document-open-recent.png</file>
         <file>images/document-open.png</file>
@@ -21,5 +22,7 @@
         <file>images/edit-undo.png</file>
         <file>images/games-hint.png</file>
         <file>images/view-fullscreen.png</file>
+        <file>images/games-hint-lit.png</file>
+        <file>about.html</file>
     </qresource>
 </RCC>

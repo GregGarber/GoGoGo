@@ -222,10 +222,10 @@ void MainWindow::on_actionRedo_triggered()
 
 void MainWindow::on_actionPreferences_triggered()
 {
-
     settings.show();
 }
 
+/*
 void MainWindow::on_actionUndo_2_triggered()
 {
     gtp.undo(1);
@@ -235,35 +235,50 @@ void MainWindow::on_actionRedo_2_triggered()
 {
 
 }
+*/
 
 void MainWindow::on_actionSuggest_Move_triggered()
 {
-
+    if(!players.getCurrent()->doHints()){
+        gtp.top_moves( players.getCurrent()->getColorString());
+    }
 }
 
 void MainWindow::on_actionText_Interface_triggered()
 {
-
+    if( ui->actionText_Interface->isChecked()){
+        ui->lineCommand->show();
+    }else{
+        ui->lineCommand->hide();
+    }
 }
 
 void MainWindow::on_actionHistory_triggered()
 {
-
+    if( ui->actionHistory->isChecked()){
+        ui->textHistory->show();
+    }else{
+        ui->textHistory->hide();
+    }
 }
 
 void MainWindow::on_actionToolbar_toggled(bool arg1)
 {
-    qDebug() << "on_actionToolbar_toggled:" << arg1;
-
+    if(ui->actionToolbar->isChecked()){
+        ui->mainToolBar->show();
+    }else{
+        ui->mainToolBar->hide();
+    }
 }
 
 void MainWindow::on_actionAbout_triggered()
 {
-
+    about.show();
 }
 
 void MainWindow::on_actionHistory_toggled(bool arg1)
 {
+    //why do I have this, when on_actionHistory_triggered() exists?
     qDebug() << "on_actionHistory_toggled:" << arg1;
 }
 
@@ -331,4 +346,26 @@ void MainWindow::readSettings()
     engine.setProgramPath( config.value("program_path").toString() );//no clue what it should default to
 #endif
     config.endGroup();
+}
+
+void MainWindow::on_actionRight_Panel_triggered()
+{
+   if(ui->actionRight_Panel->isChecked()){
+       ui->tabWidget->show();
+   } else{
+       ui->tabWidget->hide();
+   }
+}
+
+void MainWindow::on_actionFull_Screen_triggered()
+{
+   if(ui->actionFull_Screen->isChecked()){
+       this->setWindowState(this->windowState() | Qt::WindowFullScreen);
+   } else {
+       this->setWindowState(this->windowState() & !Qt::WindowFullScreen);
+       /*
+       this->hide();
+       this->show();
+       */
+   }
 }

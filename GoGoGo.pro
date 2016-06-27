@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     settings.cpp \
     gtp.cpp \
     player.cpp \
-    playerwrapper.cpp
+    playerwrapper.cpp \
+    aboutdialog.cpp
 
 HEADERS  += mainwindow.h \
     goboard.h \
@@ -28,10 +29,12 @@ HEADERS  += mainwindow.h \
     settings.h \
     gtp.h \
     player.h \
-    playerwrapper.h
+    playerwrapper.h \
+    aboutdialog.h
 
 FORMS    += mainwindow.ui \
-    settings.ui
+    settings.ui \
+    aboutdialog.ui
 
 RESOURCES += \
     resources.qrc

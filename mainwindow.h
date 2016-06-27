@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include "gtpengineprocess.h"
 #include "settings.h"
+#include "aboutdialog.h"
 #include "gtp.h"
 #include "playerwrapper.h"
 
@@ -27,6 +28,7 @@ public:
     QSettings config;
     QString fileName;
     Settings settings;
+    AboutDialog about;
 
     void readSettings();
     void writeSettings();
@@ -56,8 +58,8 @@ private slots:
     void on_actionUndo_triggered();
     void on_actionRedo_triggered();
     void on_actionPreferences_triggered();
-    void on_actionUndo_2_triggered();
-    void on_actionRedo_2_triggered();
+    //void on_actionUndo_2_triggered();
+    //void on_actionRedo_2_triggered();
     void on_actionSuggest_Move_triggered();
     void on_actionText_Interface_triggered();
     void on_actionHistory_triggered();
@@ -67,6 +69,9 @@ private slots:
     void on_lineCommand_returnPressed();
     void on_actionAutoplay_triggered();
     void on_gameBoard_customContextMenuRequested(const QPoint &pos);
+    void on_actionRight_Panel_triggered();
+
+    void on_actionFull_Screen_triggered();
 
 private:
     Ui::MainWindow *ui;
