@@ -25,6 +25,8 @@ MainWindow::MainWindow(QWidget *parent) :
     engine.addProgramArg("--mode gtp");
     engine.start();
     gtp.setEngine(engine);
+    ui->labelBlack->setStyleSheet("#labelBlack { color:#000000; background: #785229;}");
+    ui->labelWhite->setStyleSheet("#labelWhite { color:#FFFFFF; background: #785229;}");
 }
 
 MainWindow::~MainWindow()
@@ -93,9 +95,9 @@ void MainWindow::moveHistory(QString color, QString vertex){
 
 void MainWindow::updateBlackScore(QString score){
     if(score.length()>0){
-        ui->labelBlack->setText(QString("W %1 capt:%2\n %3").arg(players.getBlack()->getName()).arg(players.getBlack()->getCaptures()).arg(score));
+        ui->labelBlack->setText(QString("B %1 capt:%2\n %3").arg(players.getBlack()->getName()).arg(players.getBlack()->getCaptures()).arg(score));
     }else{
-        ui->labelBlack->setText(QString("W %1 capt:%2 ").arg(players.getBlack()->getName()).arg(players.getBlack()->getCaptures()));
+        ui->labelBlack->setText(QString("B %1 capt:%2 ").arg(players.getBlack()->getName()).arg(players.getBlack()->getCaptures()));
     }
 }
 

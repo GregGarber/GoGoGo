@@ -34,6 +34,12 @@
        <enum>Qt::Horizontal</enum>
       </property>
       <widget class="GoBoard" name="gameBoard">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>2</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="contextMenuPolicy">
         <enum>Qt::CustomContextMenu</enum>
        </property>
@@ -63,15 +69,9 @@
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
-          <widget class="QFrame" name="frame">
-           <property name="styleSheet">
-            <string notr="true">.frame { background: #785229;}</string>
-           </property>
-           <property name="frameShape">
-            <enum>QFrame::StyledPanel</enum>
-           </property>
-           <property name="frameShadow">
-            <enum>QFrame::Raised</enum>
+          <widget class="QWidget" name="widget" native="true">
+           <property name="autoFillBackground">
+            <bool>false</bool>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
@@ -82,8 +82,17 @@
               <property name="text">
                <string>Black:</string>
               </property>
+              <property name="scaledContents">
+               <bool>false</bool>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+              </property>
               <property name="wordWrap">
                <bool>true</bool>
+              </property>
+              <property name="margin">
+               <number>10</number>
               </property>
              </widget>
             </item>
@@ -95,8 +104,14 @@
               <property name="text">
                <string>White:</string>
               </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+              </property>
               <property name="wordWrap">
                <bool>true</bool>
+              </property>
+              <property name="margin">
+               <number>10</number>
               </property>
              </widget>
             </item>
@@ -188,7 +203,7 @@
      <x>0</x>
      <y>0</y>
      <width>836</width>
-     <height>35</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -251,24 +266,52 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="separator"/>
+   <addaction name="actionNew_Game"/>
+   <addaction name="actionOpen"/>
+   <addaction name="actionSave_Game"/>
+   <addaction name="actionSave_Game_As"/>
+   <addaction name="separator"/>
+   <addaction name="actionUndo"/>
+   <addaction name="actionRedo"/>
+   <addaction name="separator"/>
+   <addaction name="actionSuggest_Move"/>
+   <addaction name="separator"/>
+   <addaction name="actionFull_Screen"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionNew_Game">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/document-new.png</normaloff>:/images/document-new.png</iconset>
+   </property>
    <property name="text">
     <string>New Game</string>
    </property>
   </action>
   <action name="actionSave_Game">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/document-save.png</normaloff>:/images/document-save.png</iconset>
+   </property>
    <property name="text">
     <string>Save Game</string>
    </property>
   </action>
   <action name="actionSave_Game_As">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/document-save-as.png</normaloff>:/images/document-save-as.png</iconset>
+   </property>
    <property name="text">
     <string>Save Game As ...</string>
    </property>
   </action>
   <action name="actionOpen">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/document-open.png</normaloff>:/images/document-open.png</iconset>
+   </property>
    <property name="text">
     <string>Open</string>
    </property>
@@ -279,21 +322,37 @@
    </property>
   </action>
   <action name="actionOpen_Recent">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/document-open-recent.png</normaloff>:/images/document-open-recent.png</iconset>
+   </property>
    <property name="text">
     <string>Open Recent</string>
    </property>
   </action>
   <action name="actionUndo">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/edit-undo.png</normaloff>:/images/edit-undo.png</iconset>
+   </property>
    <property name="text">
     <string>Undo</string>
    </property>
   </action>
   <action name="actionRedo">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/edit-redo.png</normaloff>:/images/edit-redo.png</iconset>
+   </property>
    <property name="text">
     <string>Redo</string>
    </property>
   </action>
   <action name="actionPreferences">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/document-properties.png</normaloff>:/images/document-properties.png</iconset>
+   </property>
    <property name="text">
     <string>Preferences...</string>
    </property>
@@ -309,11 +368,19 @@
    </property>
   </action>
   <action name="actionSuggest_Move">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/games-hint.png</normaloff>:/images/games-hint.png</iconset>
+   </property>
    <property name="text">
     <string>Suggest Move</string>
    </property>
   </action>
   <action name="actionFull_Screen">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/view-fullscreen.png</normaloff>:/images/view-fullscreen.png</iconset>
+   </property>
    <property name="text">
     <string>Full Screen</string>
    </property>

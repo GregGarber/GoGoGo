@@ -262,6 +262,8 @@ QString GTP::new_score(){
     QByteArray reply = engine->write( QString("new_score"));
     if(successful( reply )){
         ret = QString(reply);
+        ret=ret.replace("upper bound:","U:");
+        ret=ret.replace("lower:","L:");
         if(ret.contains("b", Qt::CaseInsensitive)){
             black_score = ret;
         }else{
