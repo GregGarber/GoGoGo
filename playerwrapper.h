@@ -10,6 +10,7 @@ class PlayerWrapper : public QObject
     Q_OBJECT
 public:
     explicit PlayerWrapper(QObject *parent = 0);
+    ~PlayerWrapper();
 
     Player* getBlack();
     Player* getCurrent();

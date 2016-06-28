@@ -22,6 +22,7 @@ class GoBoard: public QGraphicsView
 public:
     qreal pixelScale; //intended to scale for HDPI monitor. Not certain it is correct.
     GoBoard(QWidget *parent);
+    ~GoBoard();
     bool isOnBoard(qreal i, qreal j);
     bool isOnBoard(QPointF j);
     void drawBoard();
@@ -31,9 +32,18 @@ public:
     void clearBoard();
     void removeMarkers(QString name);
     void readSettings();
-    void center(auto *item);
-    void center(auto *item, QPointF p);
-    void center(auto *item, qreal x, qreal y);
+
+    template <class T> void center(T* item){
+        item->setPos( item->pos().rx()-(item->sceneBoundingRect().width()/2.0), item->pos().ry()-(item->sceneBoundingRect().height()/2.0));
+    }
+    template <class T> void center(T* item, QPointF p){
+        item->setPos( p.rx()-(item->sceneBoundingRect().width()/2.0), p.ry()-(item->sceneBoundingRect().height()/2.0));
+    }
+    template <class T> void center(T* item, qreal x, qreal y){
+        item->setPos( x-(item->sceneBoundingRect().width()/2.0), y-(item->sceneBoundingRect().height()/2.0));
+    }
+
+    QGraphicsItemGroup *gig;
     QMap<QString, QGraphicsItemGroup*> markers;
     QSettings config;
 
@@ -95,18 +105,18 @@ public:
     QGraphicsPixmapItem* pseudoCursor;
 
     public slots:
-    void doMenu(QPoint p);
     void placeStone(QString color, QString location);
     void removeStone(QString location);
     void checkStones(QString color, QStringList verticies);
-    void showTopMoves(QString color, QStringList verticies);
+    void showTopMoves(const QString color, QStringList verticies);
 
 signals:
-    void boardLeftClicked(QString color, QString vertex);
+    //void boardLeftClicked(QString color, QString vertex);
+    void boardLeftClicked(QString vertex);//color kept track separately now
 
 
 protected:
-    void	resizeEvent(QResizeEvent *event);
+    void resizeEvent(QResizeEvent *event);
     void mouseMoveEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);
 

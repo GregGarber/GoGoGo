@@ -7,9 +7,6 @@ GoBoard::GoBoard(QWidget *parent = 0) : QGraphicsView(parent)
 {
     scene = new QGraphicsScene(-GO_BORDER_SIZE, -GO_BORDER_SIZE, GO_BOARD_SIZE, GO_BOARD_SIZE,this);
     setScene(scene);
-    //connect(scene, SIGNAL(contextMenuEvent(QGraphicsSceneContextMenuEvent)), this, SLOT(doMenu(QGraphicsSceneContextMenuEvent)));
-    connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(doMenu(QPoint)));
-
     pixelScale = this->devicePixelRatioF();
     backgroundPM = QPixmap("WoodBoard1.png");
     whiteStonePM = QPixmap("WhiteStone.png");
@@ -38,22 +35,6 @@ GoBoard::GoBoard(QWidget *parent = 0) : QGraphicsView(parent)
     qreal j= pseudoCursor->sceneBoundingRect().height()/2.0;
     pseudoCursor->setData(PseudoCursorData::HALF_SIZE, QPointF(i,j));
 
-    /*
-    redBrush = QBrush(Qt::red);
-    redPen = QPen(redBrush,0);
-    QGraphicsEllipseItem *el= scene->addEllipse(round(gridSizePixels*(qreal)(boardSize-1)), round(gridSizePixels*(qreal)(boardSize-1)), 10.0, 10.0, redPen, redBrush);
-    center(el);
-    */
-}
-
-void GoBoard::center(auto *item){
-    item->setPos( item->pos().rx()-(item->sceneBoundingRect().width()/2.0), item->pos().ry()-(item->sceneBoundingRect().height()/2.0));
-}
-void GoBoard::center(auto *item, QPointF p){
-    item->setPos( p.rx()-(item->sceneBoundingRect().width()/2.0), p.ry()-(item->sceneBoundingRect().height()/2.0));
-}
-void GoBoard::center(auto *item, qreal x, qreal y){
-    item->setPos( x-(item->sceneBoundingRect().width()/2.0), y-(item->sceneBoundingRect().height()/2.0));
 }
 
 bool GoBoard::isOnBoard(QPointF r){
@@ -93,7 +74,8 @@ void GoBoard::mouseMoveEvent(QMouseEvent *e){
 
 void GoBoard::mouseReleaseEvent(QMouseEvent *e){
     if( isOnBoard(pseudoCursor->data(REAL_POS).toPointF())){
-        emit boardLeftClicked(playerColor, posToAlphaNum(pseudoCursor->data(REAL_POS).toPointF()));
+        //emit boardLeftClicked(playerColor, posToAlphaNum(pseudoCursor->data(REAL_POS).toPointF()));
+        emit boardLeftClicked(posToAlphaNum(pseudoCursor->data(REAL_POS).toPointF()));
     }
     QGraphicsView::mouseReleaseEvent(e);
 }
@@ -133,15 +115,18 @@ void GoBoard::checkStones(QString color, QStringList verticies){
        }
    }
 }
+GoBoard::~GoBoard(){
+    delete gig;
+}
 
-void GoBoard::showTopMoves(QString color, QStringList verticies){
+void GoBoard::showTopMoves(const QString color, QStringList verticies){
 
     QPointF pt;
     QPen pen(QColor(Qt::GlobalColor::red));
     QString marker_name = QString("%1_hints").arg(color);
     removeMarkers(marker_name);
-    //QGraphicsItemGroup *gig = new QGraphicsItemGroup(boardBackground);
-    QGraphicsItemGroup *gig = new QGraphicsItemGroup();
+    //QGraphicsItemGroup *gig = new QGraphicsItemGroup();
+    gig = new QGraphicsItemGroup();
     pen.setWidth(1);
     pen.setCosmetic(true);
     QFont font =QFont("Arial", 8*pixelScale, 9 );
@@ -149,13 +134,18 @@ void GoBoard::showTopMoves(QString color, QStringList verticies){
     QBrush brush(QColor(0,0,0,127));
     big_font.setUnderline(true);
     big_font.setPointSize(12*pixelScale);
-        QGraphicsSimpleTextItem *heading = scene->addSimpleText( QString("%1 Hints\nVertex\tRating").arg(color.toUpper()), big_font);
-        heading->setPos(1050.0, -75.0);
+    const QString h = QString("%1 Hints\nVertex\tRating").arg(color.toUpper());
+    //QGraphicsSimpleTextItem* heading = scene->addSimpleText( h, big_font);
+    //QGraphicsSimpleTextItem* heading = scene->addSimpleText( QString(h), QFont(big_font));
+    QGraphicsTextItem* heading = scene->addText( QString(h), big_font);
+    heading->setPos(1050.0, -75.0);
+    /*
     if(color=="white"){
         heading->setBrush(QColor(Qt::white));
     }else{
         heading->setBrush(QColor(Qt::black));
     }
+    */
     big_font.setUnderline(false);
     big_font.setPointSize(15*pixelScale);
     for(int i=0; i<verticies.length(); i+=2){//every other is a score
@@ -172,13 +162,30 @@ void GoBoard::showTopMoves(QString color, QStringList verticies){
         center(tx, pt);
 
         QGraphicsEllipseItem *el = scene->addEllipse( tx->sceneBoundingRect() ,pen,brush);
-        QGraphicsSimpleTextItem *tx2 = scene->addSimpleText( QString("%1\t%2").arg(verticies.at(i).toUpper()).arg(verticies.at(i+1)), big_font);
+        //There may be a bug in QGraphicsSimpleTextItem. Using it, Valgrind reports
+        //use of uninitialized value. Tried a zillion things and couldn't get rid of it.
+        //QGraphicsSimpleTextItem *tx2 = scene->addSimpleText( QString("%1\t%2").arg(verticies.at(i).toUpper()).arg(verticies.at(i+1)), big_font);
+        QGraphicsTextItem *tx2 = scene->addText( QString("%1\t%2").arg(verticies.at(i).toUpper()).arg(verticies.at(i+1)), big_font);
         tx2->setPos(1100.0, i*20.0);
+        /*
+         * PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+         * 16996 g         20   0  430588  66524  38316 S        0.4   0:00.30 GoGoGo
+         * 16996 g         20   0  431140  67044  38316 S        0.4   0:00.62 GoGoGo //moves
+         * 16996 g         20   0  431140  67044  38316 S        0.4   0:00.82 GoGoGo //more moves
+         * 16996 g         20   0  431680  67484  38520 S        0.4   0:01.02 GoGoGo //hints on
+         * 16996 g         20   0  432540  68276  38520 S        0.4   0:01.41 GoGoGo //more moves with hints
+         * 16996 g         20   0  433512  69540  38552 S        0.4   0:02.16 GoGoGo // and more, yup, still leaky
+         * 16996 g         20   0  433748  69540  38552 S        0.4   0:02.36 GoGoGo //new game, nothing freed?
+         * 16996 g         20   0  433748  69540  38552 S        0.4   0:02.98 GoGoGo //23 moves w/ hints
+         *
+         * Hmmm, Valgrind isn't showing any more leaks in my code. But it does report
+         * 95 issues in external code. I guess each stone added takes some memory...
     if(color=="white"){
         tx2->setBrush(QColor(Qt::white));
     }else{
         tx2->setBrush(QColor(Qt::black));
     }
+    */
 
         el->setToolTip(QString("%1 %2").arg(verticies.at(i)).arg(verticies.at(i+1)));
         gig->addToGroup(el);
@@ -189,24 +196,19 @@ void GoBoard::showTopMoves(QString color, QStringList verticies){
     scene->addItem(gig);
     markers.insert(marker_name, gig);
 }
-void GoBoard::doMenu(QPoint p){
-    /*
-    qDebug() << "Gameboard TODO context menu requested at:"<<p;
-    QMenu submenu;
-    QPoint item = mapToGlobal(p);
-    submenu.addAction("Add");
-    submenu.addAction("Delete");
-    QAction* rightClickItem = submenu.exec(item);
-    qDebug() << posToAlphaNum(mapToScene(p));
-    //delete rightClickItem;
-    */
-}
 
 void GoBoard::removeMarkers(QString name){
     if(markers.contains(name)){
         scene->removeItem(markers[name]);
+        delete markers[name];
         markers.remove(name);
     }
+    /*
+    if(markers.contains(name)){
+        scene->removeItem(markers[name]);
+        markers.remove(name);
+    }
+    */
 }
 
 
@@ -274,6 +276,7 @@ QPointF GoBoard::alphaNumToPos(QString alphanum){
 }
 
 void GoBoard::placeStone( QString color, QString location){
+    qDebug() << "placeStone("<<color <<","<<location<<") ########################";
     location = location.trimmed().toLower();
     color = color.trimmed().toLower();
     Stone stone;

@@ -10,7 +10,8 @@ MainWindow::MainWindow(QWidget *parent) :
     computer_timer.setSingleShot(true);
     connect(&computer_timer, SIGNAL(timeout()), this, SLOT(computerPlay()));
     connect(this, SIGNAL(gameOver(QString)), this, SLOT(setGameOver(QString)));
-    connect(ui->gameBoard, SIGNAL(boardLeftClicked(QString,QString)),this,SLOT(doPlay(QString,QString)));
+    //connect(ui->gameBoard, SIGNAL(boardLeftClicked(QString,QString)),this,SLOT(doPlay(QString)));
+    connect(ui->gameBoard, SIGNAL(boardLeftClicked(QString)),this,SLOT(doPlay(QString)));
     connect(&players, SIGNAL(blackScore(QString)), this, SLOT(updateBlackScore(QString)));
     connect(&players, SIGNAL(whiteScore(QString)), this, SLOT(updateWhiteScore(QString)));
     connect(&gtp, SIGNAL(move(QString,QString)),ui->gameBoard,SLOT(placeStone(QString,QString)));
@@ -46,11 +47,12 @@ void MainWindow::setGameOver(QString reason){
     ui->textHistory->appendPlainText(QString("%1 Game Over %2").arg(moves).arg(reason));
 }
 void MainWindow::computerPlay(){
-    doPlay("","");
+    doPlay("");
 }
 
-void MainWindow::doPlay(QString color, QString vertex){
+void MainWindow::doPlay(QString vertex){
     if(game_over) return;
+    qDebug() <<" doPlay "<<vertex<<" *********************************";
     if(players.getCurrent()->getSpecies() == "Computer"){
         QString result = gtp.genmove( players.getCurrent()->getColorString() );
         if(result == "pass"){
@@ -84,7 +86,6 @@ void MainWindow::doPlay(QString color, QString vertex){
     ui->buttonHint->setChecked(players.getCurrent()->doHints());
     if(players.getCurrent()->getSpecies() == "Computer"){
         computer_timer.start(100);
-//        doPlay("","");
     }else{
         if( players.getCurrent()->doHints()) gtp.top_moves(players.getCurrent()->getColorString());
     }
@@ -154,7 +155,6 @@ void MainWindow::on_actionNew_Game_triggered()
     ui->labelNotes->setText(QString("%1 (%2) Gets First Turn").arg(players.getCurrent()->getName()).arg(players.getCurrent()->getColorString()));
 
     if(players.getCurrent()->getSpecies() == "Computer"){
-        //doPlay("","");
         computer_timer.start(100);
     }
 }
@@ -264,7 +264,8 @@ void MainWindow::on_actionHistory_triggered()
 
 void MainWindow::on_actionToolbar_toggled(bool arg1)
 {
-    if(ui->actionToolbar->isChecked()){
+    //if(ui->actionToolbar->isChecked()){
+    if(arg1){
         ui->mainToolBar->show();
     }else{
         ui->mainToolBar->hide();
@@ -314,9 +315,10 @@ void MainWindow::on_gameBoard_customContextMenuRequested(const QPoint &pos)
     submenu.addAction("Move Reasons");
 //    submenu.addAction("Delete");
     QAction* rightClickItem = submenu.exec(item);
-    qDebug() << "context menu item "<< rightClickItem->text()<< " clicked";
+    //qDebug() << "context menu item "<< rightClickItem->text()<< " clicked";
     vertex = ui->gameBoard->posToAlphaNum(ui->gameBoard->mapToScene(pos));
 
+    rightClickItem->dumpObjectInfo();
     if( rightClickItem->text() == "Move Reasons"){
         gtp.move_reasons(vertex);
     }

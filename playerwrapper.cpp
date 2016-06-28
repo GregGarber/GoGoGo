@@ -12,6 +12,11 @@ PlayerWrapper::PlayerWrapper(QObject *parent) : QObject(parent)
     readSettings();
 }
 
+PlayerWrapper::~PlayerWrapper(){
+    delete black;
+    delete white;
+}
+
 Player* PlayerWrapper::getBlack(){
     return black;
 }

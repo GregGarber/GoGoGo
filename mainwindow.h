@@ -37,7 +37,7 @@ signals:
     void gameOver(QString reason);
 
 public slots:
-    void doPlay(QString color, QString vertex);
+    void doPlay(QString vertex);
     void engineStarted();
     void updateBlackScore(QString score);
     void updateWhiteScore(QString score);
