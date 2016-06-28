@@ -1,7 +1,6 @@
 <RCC>
-    <qresource prefix="/home/g/prog/GoGoGo">
+    <qresource prefix="/asd">
         <file>images/BlackStone.png</file>
-        <file>images/Logo_16x16.png</file>
         <file>images/Logo_32x32.png</file>
         <file>images/Logo_64x64.png</file>
         <file>images/Logo_128x128.png</file>
@@ -24,5 +23,12 @@
         <file>images/view-fullscreen.png</file>
         <file>images/games-hint-lit.png</file>
         <file>about.html</file>
+        <file>stylesheet.css</file>
+        <file>images/BlackStone.png</file>
+        <file>images/Logo_16x16.png</file>
+        <file>images/BlackStoneCursor.png</file>
+        <file>images/WhiteStone.png</file>
+        <file>images/WhiteStoneCursor.png</file>
+        <file>images/WoodBoard1.png</file>
     </qresource>
 </RCC>

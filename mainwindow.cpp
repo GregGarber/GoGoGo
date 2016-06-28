@@ -343,7 +343,7 @@ void MainWindow::readSettings()
     config.beginGroup("Engine");
 #ifdef Q_OS_UNIX
     engine.setProgramPath( config.value("program_path", "/usr/games/gnugo").toString() );
-#elif
+#else if Q_OS_WIN
     //probably Windblows chunks
     engine.setProgramPath( config.value("program_path").toString() );//no clue what it should default to
 #endif
@@ -364,8 +364,12 @@ void MainWindow::on_actionFull_Screen_triggered()
    if(ui->actionFull_Screen->isChecked()){
        this->setWindowState(this->windowState() | Qt::WindowFullScreen);
    } else {
-       this->setWindowState(this->windowState() & !Qt::WindowFullScreen);
+       int flag = this->windowState();
+       int another_flag = !Qt::WindowFullScreen;
+       int anding = flag & another_flag;
+       this->setWindowState((Qt::WindowStates)anding);
        /*
+       this->setWindowState(this->windowState() & !Qt::WindowFullScreen);
        this->hide();
        this->show();
        */

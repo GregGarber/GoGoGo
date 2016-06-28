@@ -8,11 +8,11 @@ GoBoard::GoBoard(QWidget *parent = 0) : QGraphicsView(parent)
     scene = new QGraphicsScene(-GO_BORDER_SIZE, -GO_BORDER_SIZE, GO_BOARD_SIZE, GO_BOARD_SIZE,this);
     setScene(scene);
     pixelScale = this->devicePixelRatioF();
-    backgroundPM = QPixmap("WoodBoard1.png");
-    whiteStonePM = QPixmap("WhiteStone.png");
-    blackStonePM = QPixmap("BlackStone.png");
-    blackStoneCursorPM = QPixmap("BlackStoneCursor.png");
-    whiteStoneCursorPM = QPixmap("WhiteStoneCursor.png");
+    backgroundPM = QPixmap(":/images/WoodBoard1.png");
+    whiteStonePM = QPixmap(":/images/WhiteStone.png");
+    blackStonePM = QPixmap(":/images/BlackStone.png");
+    blackStoneCursorPM = QPixmap(":/images/BlackStoneCursor.png");
+    whiteStoneCursorPM = QPixmap(":/images/WhiteStoneCursor.png");
 
     cursor = QCursor(blackStoneCursorPM);
     cursor.setShape(Qt::BlankCursor);
@@ -122,7 +122,7 @@ GoBoard::~GoBoard(){
 void GoBoard::showTopMoves(const QString color, QStringList verticies){
 
     QPointF pt;
-    QPen pen(QColor(Qt::GlobalColor::red));
+    QPen pen = QPen(QColor(Qt::red));
     QString marker_name = QString("%1_hints").arg(color);
     removeMarkers(marker_name);
     //QGraphicsItemGroup *gig = new QGraphicsItemGroup();

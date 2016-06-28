@@ -12,7 +12,9 @@ TARGET = GoGoGo
 TEMPLATE = app
 #QMAKE_CXXFLAGS = -std=gnu++14
 CONFIG += c++14
-QMAKE_CXXFLAGS += -std=c++1y
+#KQMAKE_CXXFLAGS += -std=c++1y
+win32:LIBS += -luser32
+win64:LIBS += -luser64
 SOURCES += main.cpp\
         mainwindow.cpp \
     goboard.cpp \
@@ -40,4 +42,5 @@ RESOURCES += \
     resources.qrc
 
 DISTFILES += \
-    stylesheet.css
+    stylesheet.css \
+    images/BlackStoneCursor.png

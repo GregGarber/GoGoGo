@@ -9,7 +9,8 @@ int main(int argc, char *argv[])
     a.setApplicationName("GoGoGo");
     a.setAttribute( Qt::AA_EnableHighDpiScaling, true);
     //QFile file(":/stylesheet.css");//not sure why broken
-    QFile file("/home/g/prog/GoGoGo/stylesheet.css");
+    //QFile file("/home/g/prog/GoGoGo/stylesheet.css");
+    QFile file(":/stylesheet.css");
     if(file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         a.setStyleSheet(file.readAll());
