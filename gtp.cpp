@@ -9,13 +9,28 @@ void GTP::setEngine(GTPEngineProcess &engine){
     this->engine = &engine;
 }
 
-bool GTP::successful(QByteArray reply){
+bool GTP::successful(QByteArray &reply){
     if(reply[0]=='='){
+        reply.remove(0,2);
         return true;
     }else{
         qDebug() << reply;
         return false;
     }
+}
+
+/*
+ * Reply is space separated string of verticies of each newline \n
+ * separated dragon.
+ */
+QStringList GTP::dragon_stones(QString color){
+    QStringList verticies;
+    QByteArray reply = engine->write( QString("dragon_stones %1").arg(color));
+    if(successful( reply )){
+        QString tmp = QString(reply);
+        verticies = tmp.split("\n", QString::SkipEmptyParts);
+    }
+    return verticies;
 }
 
 QStringList GTP::top_moves(QString color){
@@ -250,7 +265,8 @@ QString GTP::genmove(QString color){
 bool GTP::play(QString color, QString vertex){
     QString cmd=QString("play %1 %2").arg(color).arg(vertex);
     bool ret=false;
-    if( successful(engine->write(cmd))){
+    QByteArray reply = engine->write(cmd);
+    if( successful(reply)){
         ret = true;
         emit move(color, vertex);
     }

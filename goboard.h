@@ -25,6 +25,7 @@ public:
     ~GoBoard();
     bool isOnBoard(qreal i, qreal j);
     bool isOnBoard(QPointF j);
+    void dragonStones(QStringList dragons);
     void drawBoard();
     QPointF alphaNumToPos(QString alphanum);
     QString posToAlphaNum(QPointF point);

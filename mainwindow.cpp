@@ -310,17 +310,25 @@ void MainWindow::on_actionAutoplay_triggered()
 void MainWindow::on_gameBoard_customContextMenuRequested(const QPoint &pos)
 {
     QMenu submenu;
-    QPoint item = mapToGlobal(pos);
+    QPoint item = ui->gameBoard->mapToGlobal(pos);
     QString vertex;
     submenu.addAction("Move Reasons");
-//    submenu.addAction("Delete");
+    submenu.addAction("Dragons");
     QAction* rightClickItem = submenu.exec(item);
-    //qDebug() << "context menu item "<< rightClickItem->text()<< " clicked";
+    if(!rightClickItem) return;
+    qDebug() << "context menu item "<< rightClickItem->text()<< " clicked";
     vertex = ui->gameBoard->posToAlphaNum(ui->gameBoard->mapToScene(pos));
 
     rightClickItem->dumpObjectInfo();
     if( rightClickItem->text() == "Move Reasons"){
-        gtp.move_reasons(vertex);
+        QStringList reasons = gtp.move_reasons(vertex);
+        if(reasons.length()>0) ui->textHistory->appendPlainText(QString("%1 Move Reasons").arg(vertex));
+        for(int i=0; i<reasons.length(); i++){
+            ui->textHistory->appendPlainText(reasons.at(i));
+        }
+    }
+    else if( rightClickItem->text() == "Dragons"){
+        ui->gameBoard->dragonStones( gtp.dragon_stones());
     }
 
 }

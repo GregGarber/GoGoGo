@@ -15,6 +15,7 @@ public:
     QSettings config;
 
     void setEngine(GTPEngineProcess &engine);
+    QStringList dragon_stones(QString color="");
     bool boardsize(int size);
     int captures(QString color);
     QStringList fixed_handicap(int handicap);
@@ -28,7 +29,7 @@ public:
     bool play(QString color, QString vertex);
     bool printsgf(QString filename);
     bool resign(QString color);
-    bool successful(QByteArray reply);
+    bool successful(QByteArray &reply);
     QStringList top_moves(QString color);
     bool undo(int moves);
     int getInt(QByteArray reply, bool &found);

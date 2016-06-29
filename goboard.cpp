@@ -48,6 +48,31 @@ bool GoBoard::isOnBoard(qreal i, qreal j)
     return QRectF(0,0,size,size).contains(i,j);
 }
 
+void GoBoard::dragonStones(QStringList dragons){
+    //qsrand((uint)QTime::msecsSinceStartOfDay());
+    for(int i=0; i< dragons.length(); i++){
+        QString stone_list = dragons.at(i);
+        QStringList verticies = stone_list.split(" ", QString::SkipEmptyParts);
+        QPainterPath p;
+
+        QPen dragon_pen = QPen( QColor(255*(float)((float)qrand()/(float)RAND_MAX),
+                                       255*(float)((float)qrand()/(float)RAND_MAX),
+                                       255*(float)((float)qrand()/(float)RAND_MAX),
+                                       255
+                                       ));
+        //qDebug() << dragon_pen.color()<< " rand:"<<(float)((float)qrand()/(float)RAND_MAX)<<" "<<RAND_MAX;
+        dragon_pen.setWidth(10);
+        for(int j=0; j<verticies.length(); j++){
+            if(j==0){
+                p.moveTo(alphaNumToPos(verticies[j]));
+            }else{
+                p.lineTo(alphaNumToPos(verticies[j]));
+            }
+        }
+            scene->addPath(p, dragon_pen);
+    }
+}
+
 void GoBoard::mouseMoveEvent(QMouseEvent *e){
     QPoint tmp;
     QPointF local_pos = e->localPos();
