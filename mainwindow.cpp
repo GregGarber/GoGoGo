@@ -309,11 +309,22 @@ void MainWindow::on_actionAutoplay_triggered()
 
 void MainWindow::on_gameBoard_customContextMenuRequested(const QPoint &pos)
 {
-    QMenu submenu;
+    QMenu submenu, *dragons, *markers;
     QPoint item = ui->gameBoard->mapToGlobal(pos);
     QString vertex;
+    submenu.addAction("Clear All Markers");
+    markers = submenu.addMenu("Clear Marker");
+    QList<QString> marker_list = ui->gameBoard->markers.keys();
+    for(int i=0; i<marker_list.length(); i++){
+        markers->addAction(QString("Marker:%1").arg(marker_list.at(i)));
+    }
+
+    dragons = submenu.addMenu("Dragons");
+    dragons->addAction("All Dragons");
+    dragons->addAction("Black Dragons");
+    dragons->addAction("White Dragons");
     submenu.addAction("Move Reasons");
-    submenu.addAction("Dragons");
+
     QAction* rightClickItem = submenu.exec(item);
     if(!rightClickItem) return;
     qDebug() << "context menu item "<< rightClickItem->text()<< " clicked";
@@ -327,8 +338,21 @@ void MainWindow::on_gameBoard_customContextMenuRequested(const QPoint &pos)
             ui->textHistory->appendPlainText(reasons.at(i));
         }
     }
-    else if( rightClickItem->text() == "Dragons"){
+    else if( rightClickItem->text() == "All Dragons"){
         ui->gameBoard->dragonStones( gtp.dragon_stones());
+    }
+    else if( rightClickItem->text() == "Black Dragons"){
+        ui->gameBoard->dragonStones( gtp.dragon_stones("black"));
+    }
+    else if( rightClickItem->text() == "White Dragons"){
+        ui->gameBoard->dragonStones( gtp.dragon_stones("white"));
+    }
+    else if( rightClickItem->text() == "Clear All Markers"){
+        ui->gameBoard->clearAllMarkers();
+    }
+    else if( rightClickItem->text().contains("Marker:")){
+        QStringList sl = rightClickItem->text().split(":",QString::SkipEmptyParts);
+        ui->gameBoard->removeMarkers(sl.at(1));
     }
 
 }

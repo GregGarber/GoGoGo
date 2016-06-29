@@ -1,9 +1,11 @@
 #include "mainwindow.h"
 #include <QApplication>
+#include <time.h>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    qsrand( time(NULL) );
     a.setOrganizationName("Geek-Ranch");
     a.setOrganizationDomain("geek-ranch.org");
     a.setApplicationName("GoGoGo");

@@ -27,6 +27,7 @@ public:
     bool isOnBoard(QPointF j);
     void dragonStones(QStringList dragons);
     void drawBoard();
+    void clearAllMarkers();
     QPointF alphaNumToPos(QString alphanum);
     QString posToAlphaNum(QPointF point);
     bool hasStone(QString location);

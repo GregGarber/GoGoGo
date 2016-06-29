@@ -2,6 +2,9 @@
 #include<QtGlobal>
 #include<QMenu>
 #include <QGraphicsSceneMoveEvent>
+#include <algorithm>
+#include <string>
+#include <array>
 
 GoBoard::GoBoard(QWidget *parent = 0) : QGraphicsView(parent)
 {
@@ -47,11 +50,27 @@ bool GoBoard::isOnBoard(qreal i, qreal j)
     qreal size = gridSizePixels*(qreal)(boardSize-1);
     return QRectF(0,0,size,size).contains(i,j);
 }
+/*
+struct compare {
+    bool operator()(const std::string& first, const std::string& second) {
+        return first.size() < second.size();
+    }
+};
+*/
+struct compare {
+    bool operator()(const QString& first, const QString& second) {
+        return first.size() < second.size();
+    }
+};
 
 void GoBoard::dragonStones(QStringList dragons){
-    //qsrand((uint)QTime::msecsSinceStartOfDay());
-    for(int i=0; i< dragons.length(); i++){
-        QString stone_list = dragons.at(i);
+    removeMarkers("dragons");
+    gig = new QGraphicsItemGroup();
+    QVector<QString> drag = dragons.toVector();
+    compare c;
+    std::sort(drag.begin(), drag.end(),c);
+    for(int i=drag.length()-1; i>0; i--){
+        QString stone_list = drag.at(i);
         QStringList verticies = stone_list.split(" ", QString::SkipEmptyParts);
         QPainterPath p;
 
@@ -68,8 +87,19 @@ void GoBoard::dragonStones(QStringList dragons){
             }else{
                 p.lineTo(alphaNumToPos(verticies[j]));
             }
+            p.addEllipse(alphaNumToPos(verticies[j]),30.0,30.0);
         }
-            scene->addPath(p, dragon_pen);
+        QGraphicsPathItem* path = scene->addPath(p, dragon_pen);
+        path->setZValue(-10.0*i);
+
+        gig->addToGroup(path );
+    }
+    scene->addItem(gig);
+    markers.insert("dragons", gig);
+}
+void GoBoard::clearAllMarkers(){
+    while(!markers.empty()){
+        removeMarkers(markers.begin().key());
     }
 }
 
