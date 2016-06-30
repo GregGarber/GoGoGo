@@ -309,7 +309,7 @@ void MainWindow::on_actionAutoplay_triggered()
 
 void MainWindow::on_gameBoard_customContextMenuRequested(const QPoint &pos)
 {
-    QMenu submenu, *dragons, *markers;
+    QMenu submenu, *dragons,*worms, *markers;
     QPoint item = ui->gameBoard->mapToGlobal(pos);
     QString vertex;
     submenu.addAction("Clear All Markers");
@@ -323,7 +323,13 @@ void MainWindow::on_gameBoard_customContextMenuRequested(const QPoint &pos)
     dragons->addAction("All Dragons");
     dragons->addAction("Black Dragons");
     dragons->addAction("White Dragons");
+
     submenu.addAction("Move Reasons");
+
+    worms = submenu.addMenu("Worms");
+    worms->addAction("All Worms");
+    worms->addAction("Black Worms");
+    worms->addAction("White Worms");
 
     QAction* rightClickItem = submenu.exec(item);
     if(!rightClickItem) return;
@@ -353,6 +359,15 @@ void MainWindow::on_gameBoard_customContextMenuRequested(const QPoint &pos)
     else if( rightClickItem->text().contains("Marker:")){
         QStringList sl = rightClickItem->text().split(":",QString::SkipEmptyParts);
         ui->gameBoard->removeMarkers(sl.at(1));
+    }
+    else if( rightClickItem->text() == "All Worms"){
+        ui->gameBoard->wormStones( gtp.worm_stones());
+    }
+    else if( rightClickItem->text() == "Black Worms"){
+        ui->gameBoard->wormStones( gtp.worm_stones("black"));
+    }
+    else if( rightClickItem->text() == "White Worms"){
+        ui->gameBoard->wormStones( gtp.worm_stones("white"));
     }
 
 }

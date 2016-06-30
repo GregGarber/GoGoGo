@@ -50,53 +50,108 @@ bool GoBoard::isOnBoard(qreal i, qreal j)
     qreal size = gridSizePixels*(qreal)(boardSize-1);
     return QRectF(0,0,size,size).contains(i,j);
 }
-/*
-struct compare {
-    bool operator()(const std::string& first, const std::string& second) {
-        return first.size() < second.size();
+
+
+float GoBoard::randy(float max, float min){
+    float diff = max-min;
+    return (diff*(float)((float)qrand()/(float)RAND_MAX))+min;
+}
+
+
+QVector<QPen> GoBoard::makePenSet(int count, QPen example ){
+    QVector<QPen> pens;
+    for(int i=0; i<count; i++){
+        QPen pen = QPen(example);
+        pen.setColor( QColor(randy(), randy(), randy(), 255) );
+        pens.append(pen);
     }
-};
-*/
+    return pens;
+}
+
+QVector<QPen> GoBoard::makePenSet(int count, QPen example, QVector<QColor> colors ){
+    QVector<QPen> pens;
+    for(int i=0; i<count; i++){
+        QPen pen = QPen(example);
+        pen.setColor( colors.at(i % colors.length() ) );
+        pens.append(pen);
+    }
+    return pens;
+}
+
+// for sorting strings by length
 struct compare {
     bool operator()(const QString& first, const QString& second) {
         return first.size() < second.size();
     }
 };
-
-void GoBoard::dragonStones(QStringList dragons){
-    removeMarkers("dragons");
+//Takes line or lines of vectors
+void GoBoard::showDragonLike(QVector<QString> stones,
+                             QString name,
+                             QVector<QPen> pens,
+                             bool do_lines,
+                             GoBoard::MarkerMarks mark_type){
     gig = new QGraphicsItemGroup();
-    QVector<QString> drag = dragons.toVector();
     compare c;
-    std::sort(drag.begin(), drag.end(),c);
-    for(int i=drag.length()-1; i>0; i--){
-        QString stone_list = drag.at(i);
+    std::sort(stones.begin(), stones.end(),c);
+    for(int i=stones.length()-1; i>0; i--){
+        QString stone_list = stones.at(i);
         QStringList verticies = stone_list.split(" ", QString::SkipEmptyParts);
         QPainterPath p;
-
-        QPen dragon_pen = QPen( QColor(255*(float)((float)qrand()/(float)RAND_MAX),
-                                       255*(float)((float)qrand()/(float)RAND_MAX),
-                                       255*(float)((float)qrand()/(float)RAND_MAX),
-                                       255
-                                       ));
-        //qDebug() << dragon_pen.color()<< " rand:"<<(float)((float)qrand()/(float)RAND_MAX)<<" "<<RAND_MAX;
-        dragon_pen.setWidth(10);
+        QPen stone_pen = pens.at(i);
         for(int j=0; j<verticies.length(); j++){
             if(j==0){
                 p.moveTo(alphaNumToPos(verticies[j]));
             }else{
-                p.lineTo(alphaNumToPos(verticies[j]));
+                if(do_lines){
+                    p.lineTo(alphaNumToPos(verticies[j]));
+                }
             }
-            p.addEllipse(alphaNumToPos(verticies[j]),30.0,30.0);
+            QPointF pt = alphaNumToPos(verticies[j]);
+            qreal sz = gridSizePixels*1.1;
+            qreal cntr = sz/2.0;
+            switch(mark_type){
+            case MarkEllipse:
+                p.addEllipse(pt,cntr,cntr);//radius so not sz
+                break;
+            case MarkRect:
+                p.addRect(pt.rx()-cntr, pt.ry()-cntr, sz, sz);
+                break;
+            case MarkRoundedRect:
+                p.addRoundRect(pt.rx(), pt.ry(), sz,sz, 3);
+                break;
+            }
+            //don't want next line to start at edge of previous shape
+            p.moveTo(alphaNumToPos(verticies[j]));
         }
-        QGraphicsPathItem* path = scene->addPath(p, dragon_pen);
+        QGraphicsPathItem* path = scene->addPath(p, stone_pen);
         path->setZValue(-10.0*i);
 
         gig->addToGroup(path );
     }
     scene->addItem(gig);
-    markers.insert("dragons", gig);
+    markers.insert(name, gig);
+
 }
+
+void GoBoard::dragonStones(QVector<QString> dragons){
+    QPen default_pen;
+    //default_pen.setStyle(Qt::DashLine);
+    default_pen.setWidth(10);
+    QVector<QPen> pens = makePenSet(dragons.length(), default_pen);
+    removeMarkers("dragons");
+    showDragonLike(dragons, "dragons", pens,true,MarkRect);
+}
+
+void GoBoard::wormStones(QVector<QString> worms){
+    QPen default_pen;
+    default_pen.setStyle(Qt::DashDotDotLine);
+    default_pen.setWidth(5);
+    QVector<QPen> pens = makePenSet(worms.length(), default_pen);
+    removeMarkers("worms");
+    showDragonLike(worms, "worms", pens);
+}
+
+
 void GoBoard::clearAllMarkers(){
     while(!markers.empty()){
         removeMarkers(markers.begin().key());
@@ -171,7 +226,10 @@ void GoBoard::checkStones(QString color, QStringList verticies){
    }
 }
 GoBoard::~GoBoard(){
-    delete gig;
+    //segfault here. Show worms, clear worms, quit.
+    //delete gig;
+    //may not need it anymore since it is now part of remove stones
+    clearAllMarkers();//I think this works instead.
 }
 
 void GoBoard::showTopMoves(const QString color, QStringList verticies){

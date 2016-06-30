@@ -23,14 +23,23 @@ bool GTP::successful(QByteArray &reply){
  * Reply is space separated string of verticies of each newline \n
  * separated dragon.
  */
-QStringList GTP::dragon_stones(QString color){
+QVector<QString> GTP::dragon_stones(QString color){
     QStringList verticies;
     QByteArray reply = engine->write( QString("dragon_stones %1").arg(color));
     if(successful( reply )){
         QString tmp = QString(reply);
         verticies = tmp.split("\n", QString::SkipEmptyParts);
     }
-    return verticies;
+    return verticies.toVector();
+}
+QVector<QString> GTP::worm_stones(QString color){
+    QStringList verticies;
+    QByteArray reply = engine->write( QString("worm_stones %1").arg(color));
+    if(successful( reply )){
+        QString tmp = QString(reply);
+        verticies = tmp.split("\n", QString::SkipEmptyParts);
+    }
+    return verticies.toVector();
 }
 
 QStringList GTP::top_moves(QString color){

@@ -15,7 +15,8 @@ public:
     QSettings config;
 
     void setEngine(GTPEngineProcess &engine);
-    QStringList dragon_stones(QString color="");
+    QVector<QString> dragon_stones(QString color="");
+    QVector<QString> worm_stones(QString color="");
     bool boardsize(int size);
     int captures(QString color);
     QStringList fixed_handicap(int handicap);

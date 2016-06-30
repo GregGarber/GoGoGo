@@ -25,7 +25,22 @@ public:
     ~GoBoard();
     bool isOnBoard(qreal i, qreal j);
     bool isOnBoard(QPointF j);
-    void dragonStones(QStringList dragons);
+    enum MarkerMarks{
+        MarkEllipse,
+        MarkRect,
+        MarkRoundedRect
+    };
+    void dragonStones(QVector<QString> dragons);
+    void wormStones(QVector<QString> worms);
+    float randy(float max=255.0, float min=0.0);
+    QVector<QPen> makePenSet(int count, QPen example );
+    QVector<QPen> makePenSet(int count, QPen example, QVector<QColor> colors);
+    void showDragonLike(QVector<QString> stones,
+                        QString name,
+                        QVector<QPen> pens,
+                        bool do_lines=true,
+                        MarkerMarks mark_type=MarkEllipse
+                        );
     void drawBoard();
     void clearAllMarkers();
     QPointF alphaNumToPos(QString alphanum);
@@ -50,6 +65,7 @@ public:
     QSettings config;
 
     //vars
+
     enum PseudoCursorData{
         HALF_SIZE,
         REAL_POS
