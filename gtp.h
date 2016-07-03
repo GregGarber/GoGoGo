@@ -36,6 +36,7 @@ public:
     int getInt(QByteArray reply, bool &found);
     QString getVertex(QByteArray reply, bool &found);
     QStringList getVerticies(QByteArray reply, bool &found);
+    QStringList getVertexScores(QByteArray reply, bool &found);
     void final_score();
 
     QMap<QString, QString> commonREs = {
@@ -50,9 +51,12 @@ public:
         {"int","(?<int>\\d+)"},
         {"word","(?<word>\\w+)"},
         {"vertex","(?<vertex>\\w\\s?\\d\\d?)"},
-        {"verticies","(\\w\\s?[.\\d]+)+"}
+        {"verticies","(\\w\\s?[.\\d]+)+"},
+        {"vertexscore","(\\w\\d+ \\d+\\.?\\d+)"}
     };
 
+    //'/(?<vertexscore>\w\d+ \d+\.?\d+)/',
+    QVector<QString> final_status_list(QString type);
 signals:
     void move(QString color, QString vertex);
     void captureCount(QString color, int total_captures);

@@ -26,8 +26,10 @@ public:
     void setCurrentPlays();
     bool getMutalPass();
     QString getGameOver();
+    QString currentColor();
     void setCurrentResigned();
 
+    bool currentIsHuman();
 signals:
     void blackScore(QString score);
     void whiteScore(QString score);

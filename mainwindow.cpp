@@ -9,13 +9,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     computer_timer.setSingleShot(true);
     connect(&computer_timer, SIGNAL(timeout()), this, SLOT(computerPlay()));
-    connect(this, SIGNAL(gameOver(QString)), this, SLOT(setGameOver(QString)));
+    //connect(this, SIGNAL(gameOver(QString)), this, SLOT(setGameOver(QString)));
     //connect(ui->gameBoard, SIGNAL(boardLeftClicked(QString,QString)),this,SLOT(doPlay(QString)));
     connect(ui->gameBoard, SIGNAL(boardLeftClicked(QString)),this,SLOT(doPlay(QString)));
     connect(&players, SIGNAL(blackScore(QString)), this, SLOT(updateBlackScore(QString)));
     connect(&players, SIGNAL(whiteScore(QString)), this, SLOT(updateWhiteScore(QString)));
     connect(&gtp, SIGNAL(move(QString,QString)),ui->gameBoard,SLOT(placeStone(QString,QString)));
-    connect(&gtp, SIGNAL(move(QString,QString)),this,SLOT(moveHistory(QString,QString)));
+    connect(&gtp, SIGNAL(move(QString,QString)),this,SLOT(addHistory(QString,QString)));
     connect(&gtp, SIGNAL(stoneListing(QString,QStringList)), ui->gameBoard, SLOT(checkStones(QString,QStringList)));
     connect(&gtp, SIGNAL(hints(QString,QStringList)), ui->gameBoard, SLOT(showTopMoves(QString,QStringList)));
     connect(&gtp, SIGNAL(blackScore(QString)), this, SLOT(updateBlackScore(QString)));
@@ -43,6 +43,12 @@ void MainWindow::engineStarted(){
 void MainWindow::setGameOver(QString reason){
     game_over = true;
     ui->labelNotes->setText(QString("Game Over %1").arg(reason));
+    ui->gameBoard->finalStatusList( gtp.final_status_list("black_territory"),"black_territory");
+    ui->gameBoard->finalStatusList( gtp.final_status_list("white_territory"),"white_territory");
+    ui->gameBoard->finalStatusList( gtp.final_status_list("alive"),"alive");
+    ui->gameBoard->finalStatusList( gtp.final_status_list("dead"),"dead");
+    ui->gameBoard->finalStatusList( gtp.final_status_list("seki"),"seki");
+    ui->gameBoard->finalStatusList( gtp.final_status_list("dame"),"dame");
     gtp.final_score();
     ui->textHistory->appendPlainText(QString("%1 Game Over %2").arg(moves).arg(reason));
 }
@@ -52,27 +58,39 @@ void MainWindow::computerPlay(){
 
 void MainWindow::doPlay(QString vertex){
     if(game_over) return;
-    qDebug() <<" doPlay "<<vertex<<" *********************************";
     if(players.getCurrent()->getSpecies() == "Computer"){
         QString result = gtp.genmove( players.getCurrent()->getColorString() );
         if(result == "pass"){
+            addHistory(players.currentColor(),tr("Passed"));
+            updateScore(players.currentColor(),tr("Passed"));
             players.setCurrentPass();
         }else if( result == "resign"){
+            addHistory(players.currentColor(),tr("Resigned"));
+            updateScore(players.currentColor(),tr("Resigned"));
             players.setCurrentResigned();
         }else{
             players.setCurrentPlays();
         }
         QString reason = players.getGameOver();
-        if(reason.length()>0) emit gameOver(reason);
+        //if(reason.length()>0) emit gameOver(reason);
+        if(reason.length()>0) setGameOver(reason);
     }else{
-        gtp.play( players.getCurrent()->getColorString(), vertex);
-        players.setCurrentPlays();
+        if(gtp.play( players.getCurrent()->getColorString(), vertex)){
+            players.setCurrentPlays();
+        }else{
+            addHistory(players.currentColor(),tr("Illegal move, try another"));
+            return;
+        }
     }
     int cnt= gtp.captures(players.getCurrent()->getColorString());
     if(cnt != players.getCurrent()->getCaptures()){
         players.getCurrent()->setCaptures(cnt);
         ui->gameBoard->checkStones(players.getNext()->getColorString(), gtp.list_stones( players.getNext()->getColorString()));
     }
+    afterMove();
+}
+
+void MainWindow::afterMove(){
     moves++;
     statusBar()->showMessage(QString("Moves: %1 Komi:%2 Handicap:%3 Estimated Score: %4")
                                 .arg(moves)
@@ -89,9 +107,19 @@ void MainWindow::doPlay(QString vertex){
     }else{
         if( players.getCurrent()->doHints()) gtp.top_moves(players.getCurrent()->getColorString());
     }
+
 }
-void MainWindow::moveHistory(QString color, QString vertex){
-    ui->textHistory->appendPlainText(QString("%1 %2 %3").arg(moves).arg(color).arg(vertex.toUpper()));
+
+void MainWindow::addHistory(QString color, QString message){
+    ui->textHistory->appendPlainText(QString("%1 %2 %3").arg(moves).arg(color).arg(message));
+}
+
+void MainWindow::updateScore(QString color, QString score){
+    if(color.contains("black",Qt::CaseInsensitive)){
+        updateBlackScore(score);
+    }else{
+        updateWhiteScore(score);
+    }
 }
 
 void MainWindow::updateBlackScore(QString score){
@@ -120,18 +148,33 @@ void MainWindow::on_buttonHint_clicked()
 
 void MainWindow::on_buttonPass_clicked()
 {
-    players.setCurrentPass();
-    gtp.pass(players.getCurrent()->getColorString());
-    QString reason = players.getGameOver();
-    if(reason.length()>0) emit gameOver(reason);
+    if(gtp.pass(players.getCurrent()->getColorString())){
+        players.setCurrentPass();
+        addHistory(players.currentColor(),tr("Passed"));
+        updateScore(players.currentColor(),tr("Passed"));
+        QString reason = players.getGameOver();
+        if(reason.length()>0){
+            //emit gameOver(reason);
+            setGameOver(reason);
+        }else{
+            afterMove();
+        }
+    }
 }
 
 
 void MainWindow::on_buttonResign_clicked()
 {
     players.setCurrentResigned();
+    addHistory(players.currentColor(),tr("Resigned"));
+    updateScore(players.currentColor(),tr("Resigned"));
     QString reason = players.getGameOver();
-    if(reason.length()>0) emit gameOver(reason);
+    if(reason.length()>0) {
+        //emit gameOver(reason);
+        setGameOver(reason);
+    }else{
+        afterMove();
+    }
 }
 
 void MainWindow::on_actionNew_Game_triggered()

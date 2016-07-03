@@ -112,10 +112,11 @@ QByteArray GTPEngineProcess::write(QByteArray data){
     QByteArray buffer;
     data = data.trimmed().append("\n");
     process.write(data);
-    if(!process.waitForBytesWritten()){
+    if(!process.waitForBytesWritten(1000*60)){
         qDebug() << "Error writing ";
     }
-    while( process.waitForReadyRead()){
+    //some commands take a long time...
+    while( process.waitForReadyRead(1000*60)){
         buffer.append(process.readAll());
         if( buffer.contains("\n\n")) break;
     }

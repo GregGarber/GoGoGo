@@ -122,7 +122,8 @@ public:
     QGraphicsPixmapItem* boardBackground;
     QGraphicsPixmapItem* pseudoCursor;
 
-    public slots:
+    void finalStatusList(QVector<QString> verticies, QString type);
+public slots:
     void placeStone(QString color, QString location);
     void removeStone(QString location);
     void checkStones(QString color, QStringList verticies);

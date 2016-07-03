@@ -33,6 +33,8 @@ public:
     void readSettings();
     void writeSettings();
 
+    void updateScore(QString color, QString score);
+    void afterMove();
 signals:
     void gameOver(QString reason);
 
@@ -43,7 +45,7 @@ public slots:
     void updateWhiteScore(QString score);
     void setGameOver(QString reason);
     void computerPlay();
-    void moveHistory(QString color, QString vertex);
+    void addHistory(QString color, QString message);
 
 private slots:
     void on_buttonHint_clicked();

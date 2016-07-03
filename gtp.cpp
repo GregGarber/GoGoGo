@@ -41,7 +41,19 @@ QVector<QString> GTP::worm_stones(QString color){
     }
     return verticies.toVector();
 }
-
+QVector<QString> GTP::final_status_list(QString type){
+    QStringList verticies;
+    QByteArray reply = engine->write( QString("final_status_list %1").arg(type));
+    if(successful( reply )){
+        QString tmp = QString(reply);
+        verticies = tmp.split("\n", QString::SkipEmptyParts);
+    }
+    return verticies.toVector();
+}
+/*
+ * read: "= C16 15.93 J14 9.73 H13 8.71 H14 8.29 B7 8.15 N3 8.01 C15 7.80 K14 7.42 G14 7.33 G13 7.25 \n\n"
+ showTopMoves: something went wrong i= 12  vertices.length()= 13
+("c16", "15.93", "j14", "9.73", "h13", "8.71", "h14", "8.29", "b7", "3 8.01", "5 7.80", "33", "3 7.25")
 QStringList GTP::top_moves(QString color){
     bool ok;
     QStringList verticies;
@@ -52,6 +64,21 @@ QStringList GTP::top_moves(QString color){
             qDebug() << "Error: top_moves_"<< color <<" "<<reply;
         }else{
             emit hints(color, verticies);
+        }
+    }
+    return verticies;
+}
+*/
+QStringList GTP::top_moves(QString color){
+    bool ok;
+    QStringList verticies;
+    QByteArray reply = engine->write( QString("top_moves_%1").arg(color));
+    if(successful( reply )){
+        verticies = getVertexScores(reply, ok);
+        if(!ok) {
+            qDebug() << "Error: top_moves_"<< color <<" "<<reply;
+        }else{
+            emit hints(color, verticies);//not really verticies
         }
     }
     return verticies;
@@ -136,24 +163,15 @@ void GTP::final_score(){
                     white_score="Draw (jigo)";
                 }
             }
-            emit blackScore(black_score);
-            emit whiteScore(white_score);
         }
+    }else{
+        black_score = tr("Unknown");
+        white_score = tr("Unknown");
     }
+    emit blackScore(black_score);
+    emit whiteScore(white_score);
 }
 
-    /* Can't figure out how to do resign. genmove can return it, but play can't send it.
-bool GTP::resign(QString color){
-    bool ret = false;
-    final_score();
-    QByteArray reply = engine->write( QString("play %1 resign").arg(color));
-    if(successful( reply )){
-        ret = true;
-        final_score();
-    }
-    return ret;
-}
-    */
 
 QStringList GTP::move_reasons(QString vertex){
     QStringList reasons;
@@ -219,6 +237,18 @@ QStringList GTP::getVerticies(QByteArray reply, bool &found){
         verticies.append( match.captured(1).toLower());
     }
     return verticies;
+}
+
+QStringList GTP::getVertexScores(QByteArray reply, bool &found){
+    QStringList vscores;
+    QRegularExpression re(commonREs.value("vertexscore"));
+    QRegularExpressionMatchIterator i = re.globalMatch(reply);
+    while (i.hasNext()) {
+        found = true;
+        QRegularExpressionMatch match = i.next();
+        vscores.append( match.captured(0));
+    }
+    return vscores;
 }
 
 QString GTP::genmove(QString color){

@@ -29,6 +29,10 @@ Player* PlayerWrapper::getCurrent(){
     return current;
 }
 
+QString PlayerWrapper::currentColor(){
+    return current->getColorString();
+}
+
 Player* PlayerWrapper::getNext(){
     return next;
 }
@@ -105,14 +109,22 @@ bool PlayerWrapper::getMutalPass(){
 QString PlayerWrapper::getGameOver(){
         //FIXME sort of guessing at these conditions
     QString ret;
-        if(getMutalPass()){
+        if(getCurrent()->getResigned() && currentIsHuman()){
+            ret = QString("%1 %2").arg(currentColor()).arg(tr("resigned"));
+        }else if(getMutalPass()){
             ret = "Mutal Pass";
         }else if(getCurrent()->getResigned() && getLast()->getResigned()){
             ret = "Mutal Resign";
         }else if(getCurrent()->getIsPassing() && getLast()->getResigned()){
             ret = QString("%1 Passed and %2 Resigned").arg(getCurrent()->getColorString()).arg(getLast()->getColorString());
         }
+        qDebug() << ret;
+
     return ret;
+}
+
+bool PlayerWrapper::currentIsHuman(){
+    return !getCurrent()->getSpecies().contains("computer", Qt::CaseInsensitive);
 }
 
 void PlayerWrapper::setCurrentResigned(){

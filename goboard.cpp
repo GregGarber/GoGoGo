@@ -93,11 +93,11 @@ void GoBoard::showDragonLike(QVector<QString> stones,
     gig = new QGraphicsItemGroup();
     compare c;
     std::sort(stones.begin(), stones.end(),c);
-    for(int i=stones.length()-1; i>0; i--){
-        QString stone_list = stones.at(i);
+    for(int i=stones.length(); i>0; i--){
+        QString stone_list = stones.at(i-1);
         QStringList verticies = stone_list.split(" ", QString::SkipEmptyParts);
         QPainterPath p;
-        QPen stone_pen = pens.at(i);
+        QPen stone_pen = pens.at((i-1)%pens.length());
         for(int j=0; j<verticies.length(); j++){
             if(j==0){
                 p.moveTo(alphaNumToPos(verticies[j]));
@@ -151,6 +151,43 @@ void GoBoard::wormStones(QVector<QString> worms){
     showDragonLike(worms, "worms", pens);
 }
 
+void GoBoard::finalStatusList(QVector<QString> verticies, QString type){
+    QPen default_pen;
+    QVector<QPen> pens;
+    MarkerMarks marker = MarkRect;
+    if(type.contains("black_territory", Qt::CaseInsensitive)){
+        default_pen.setColor(Qt::black);
+        default_pen.setWidth(10);
+    }else if(type.contains("white_territory", Qt::CaseInsensitive)){
+        default_pen.setColor(Qt::white);
+        default_pen.setWidth(10);
+    }else if(type.contains("dame", Qt::CaseInsensitive)){
+        default_pen.setStyle(Qt::DashLine);
+        default_pen.setColor(Qt::yellow);
+        marker = MarkEllipse;
+        default_pen.setWidth(3);
+    }else if(type.contains("seki", Qt::CaseInsensitive)){
+        default_pen.setStyle(Qt::DashLine);
+        default_pen.setColor(Qt::blue);
+        marker = MarkEllipse;
+        default_pen.setWidth(3);
+    }else if(type.contains("alive", Qt::CaseInsensitive)){
+        default_pen.setStyle(Qt::DashDotDotLine);
+        default_pen.setColor(Qt::green);
+        default_pen.setWidth(5);
+        marker = MarkEllipse;
+    }else if(type.contains("dead", Qt::CaseInsensitive)){
+        default_pen.setStyle(Qt::DashDotDotLine);
+        default_pen.setColor(Qt::red);
+        default_pen.setWidth(5);
+        marker = MarkEllipse;
+    }
+
+    pens.append(default_pen);
+    //QVector<QPen> pens = makePenSet(verticies.length(), default_pen);
+    removeMarkers(type);
+    showDragonLike(verticies, type, pens,false, marker);
+}
 
 void GoBoard::clearAllMarkers(){
     while(!markers.empty()){
@@ -233,74 +270,40 @@ GoBoard::~GoBoard(){
 }
 
 void GoBoard::showTopMoves(const QString color, QStringList verticies){
-
     QPointF pt;
-    QPen pen = QPen(QColor(Qt::red));
+    QPen pen = QPen(QColor(Qt::black));
     QString marker_name = QString("%1_hints").arg(color);
     removeMarkers(marker_name);
-    //QGraphicsItemGroup *gig = new QGraphicsItemGroup();
     gig = new QGraphicsItemGroup();
     pen.setWidth(1);
     pen.setCosmetic(true);
     QFont font =QFont("Arial", 8*pixelScale, 9 );
     QFont big_font = QFont("Arial", 15*pixelScale, 10);
-    QBrush brush(QColor(0,0,0,127));
+    QBrush brush(QColor(0,0,0,255));
     big_font.setUnderline(true);
     big_font.setPointSize(12*pixelScale);
     const QString h = QString("%1 Hints\nVertex\tRating").arg(color.toUpper());
-    //QGraphicsSimpleTextItem* heading = scene->addSimpleText( h, big_font);
-    //QGraphicsSimpleTextItem* heading = scene->addSimpleText( QString(h), QFont(big_font));
     QGraphicsTextItem* heading = scene->addText( QString(h), big_font);
     heading->setPos(1050.0, -75.0);
-    /*
-    if(color=="white"){
-        heading->setBrush(QColor(Qt::white));
-    }else{
-        heading->setBrush(QColor(Qt::black));
-    }
-    */
     big_font.setUnderline(false);
     big_font.setPointSize(15*pixelScale);
-    for(int i=0; i<verticies.length(); i+=2){//every other is a score
-                if(i+2>verticies.length()){
-                    qDebug()<<" showTopMoves: something went wrong i="<<i<<" vertices.length()="<<verticies.length();
-                    qDebug() << verticies;
-                    break;
-                }
-        QString strength = QString(" %1 ").arg(verticies.at(i+1));
-        font.setPixelSize((int)((float)gridSizePixels/(float)strength.length())*2);
-        pt = alphaNumToPos(verticies.at(i));
-        QGraphicsSimpleTextItem *tx = scene->addSimpleText(strength, font);
+    QString vertex,line;
+    QString score;//a float
+    QStringList tmp;
+    for(int i=0; i<verticies.length(); i++){
+        line = verticies.at(i);
+        tmp=line.split(" ", QString::SkipEmptyParts);
+        vertex = tmp.at(0);
+        score = tmp.at(1);
+        font.setPixelSize((int)((float)gridSizePixels/(float)score.length())*2);
+        pt = alphaNumToPos(vertex);
+        QGraphicsSimpleTextItem *tx = scene->addSimpleText(score, font);
         tx->setBrush(QColor(Qt::white));
         center(tx, pt);
-
-        QGraphicsEllipseItem *el = scene->addEllipse( tx->sceneBoundingRect() ,pen,brush);
-        //There may be a bug in QGraphicsSimpleTextItem. Using it, Valgrind reports
-        //use of uninitialized value. Tried a zillion things and couldn't get rid of it.
-        //QGraphicsSimpleTextItem *tx2 = scene->addSimpleText( QString("%1\t%2").arg(verticies.at(i).toUpper()).arg(verticies.at(i+1)), big_font);
-        QGraphicsTextItem *tx2 = scene->addText( QString("%1\t%2").arg(verticies.at(i).toUpper()).arg(verticies.at(i+1)), big_font);
-        tx2->setPos(1100.0, i*20.0);
-        /*
-         * PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
-         * 16996 g         20   0  430588  66524  38316 S        0.4   0:00.30 GoGoGo
-         * 16996 g         20   0  431140  67044  38316 S        0.4   0:00.62 GoGoGo //moves
-         * 16996 g         20   0  431140  67044  38316 S        0.4   0:00.82 GoGoGo //more moves
-         * 16996 g         20   0  431680  67484  38520 S        0.4   0:01.02 GoGoGo //hints on
-         * 16996 g         20   0  432540  68276  38520 S        0.4   0:01.41 GoGoGo //more moves with hints
-         * 16996 g         20   0  433512  69540  38552 S        0.4   0:02.16 GoGoGo // and more, yup, still leaky
-         * 16996 g         20   0  433748  69540  38552 S        0.4   0:02.36 GoGoGo //new game, nothing freed?
-         * 16996 g         20   0  433748  69540  38552 S        0.4   0:02.98 GoGoGo //23 moves w/ hints
-         *
-         * Hmmm, Valgrind isn't showing any more leaks in my code. But it does report
-         * 95 issues in external code. I guess each stone added takes some memory...
-    if(color=="white"){
-        tx2->setBrush(QColor(Qt::white));
-    }else{
-        tx2->setBrush(QColor(Qt::black));
-    }
-    */
-
-        el->setToolTip(QString("%1 %2").arg(verticies.at(i)).arg(verticies.at(i+1)));
+        QGraphicsRectItem *el = scene->addRect(tx->sceneBoundingRect(),pen,brush);
+        QGraphicsTextItem *tx2 = scene->addText(line.replace(" ","\t") , big_font);
+        tx2->setPos(1100.0, i*30.0);
+        el->setToolTip(line);
         gig->addToGroup(el);
         gig->addToGroup(tx);
         gig->addToGroup(heading);
@@ -316,12 +319,6 @@ void GoBoard::removeMarkers(QString name){
         delete markers[name];
         markers.remove(name);
     }
-    /*
-    if(markers.contains(name)){
-        scene->removeItem(markers[name]);
-        markers.remove(name);
-    }
-    */
 }
 
 
