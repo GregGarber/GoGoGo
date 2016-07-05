@@ -386,7 +386,6 @@ QPointF GoBoard::alphaNumToPos(QString alphanum){
 }
 
 void GoBoard::placeStone( QString color, QString location){
-    qDebug() << "placeStone("<<color <<","<<location<<") ########################";
     location = location.trimmed().toLower();
     color = color.trimmed().toLower();
     Stone stone;
@@ -396,16 +395,67 @@ void GoBoard::placeStone( QString color, QString location){
         new_stone = scene->addPixmap(blackStonePM);
     }else if( stone.color == White){
         new_stone = scene->addPixmap(whiteStonePM);
+
     }
+    /* mysterious segfault involving qstring
     new_stone->setToolTip(QString("Pos: %1\nColor: %2\nOrder: %3")
                           .arg(location.toUpper() )
                           .arg(color.at(0).toUpper()+color.mid(1))
                           .arg(( (uint)stoneHouse.size() +1) ) );
+                          */
     if(stone.color != Blank){
         new_stone->setScale( ((qreal)gridSizePixels/(qreal)new_stone->sceneBoundingRect().width() ));
         QPointF p = alphaNumToPos(location);
         new_stone->setPos(p);
         center(new_stone);
+        if(stone.color==White){
+        //QBrush greenBrush = QBrush(Qt::green);
+        highlight = new Highlight(new_stone);
+        highlight->setDiameter(gridSizePixels);
+        highlight->setPos(p.rx(), p.ry());
+        scene->addItem(highlight);
+        QPropertyAnimation *a = new QPropertyAnimation(highlight,"time");
+        a->setDuration(2000);
+        a->setStartValue(0.0);
+        a->setEndValue(5.0); //do the physics in seconds
+        highlight->setTotalTime(5.0);//sometimes need to know this
+        //a->setEasingCurve(QEasingCurve::OutBack);
+        a->start(QPropertyAnimation::DeleteWhenStopped);
+        }
+
+        //center(highlight);
+        // highlight isn't centered, something to do with pen width
+        // need sound of stones hitting board
+        // can hint labels be rotated? different text colors?
+        //might be nice to go whole hog with animating stones
+        // need stars
+        //highlight top hint
+        //looks like it can only one effect at a time
+        //QGraphicsBlurEffect *blur = new QGraphicsBlurEffect(this);
+        //highlight->setGraphicsEffect(blur);
+
+/*
+        goe = new QGraphicsOpacityEffect(this);
+        highlight->setGraphicsEffect(goe);
+        QPropertyAnimation *a = new QPropertyAnimation(goe,"opacity");
+        a->setDuration(8000);
+        a->setStartValue(1);
+        a->setEndValue(0);
+        a->setEasingCurve(QEasingCurve::OutBack);
+        a->start(QPropertyAnimation::DeleteWhenStopped);
+        */
+        //}
+
+        /*
+        QPropertyAnimation *b = new QPropertyAnimation(highlight,"geometry");
+        b->setDuration(10000);
+        //b->setStartValue(QRect(0, 0, 100, 30));
+        b->setStartValue(highlight->boundingRect());
+        b->setEndValue(QRect(250, 250, 100, 30));
+        QSequentialAnimationGroup *gr = new QSequentialAnimationGroup;
+        */
+
+
         stone.stone = new_stone;
         if(hasStone(location)) removeStone(location);//can only be one stone per location. NO, should return invalid move or something
         stoneHouse[location]=stone;

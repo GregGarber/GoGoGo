@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     gtp.cpp \
     player.cpp \
     playerwrapper.cpp \
-    aboutdialog.cpp
+    aboutdialog.cpp \
+    highlight.cpp
 
 HEADERS  += mainwindow.h \
     goboard.h \
@@ -32,7 +33,8 @@ HEADERS  += mainwindow.h \
     gtp.h \
     player.h \
     playerwrapper.h \
-    aboutdialog.h
+    aboutdialog.h \
+    highlight.h
 
 FORMS    += mainwindow.ui \
     settings.ui \

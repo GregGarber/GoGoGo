@@ -10,7 +10,10 @@
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
 #include <QDebug>
+#include <QGraphicsOpacityEffect>
 #include <map>
+
+#include "highlight.h"
 
 #define GO_BOARD_SIZE 1207
 #define GO_GRID_SIZE 1007
@@ -20,9 +23,18 @@ class GoBoard: public QGraphicsView
 {
     Q_OBJECT
 public:
+    QGraphicsOpacityEffect *goe;
+    //QGraphicsEllipseItem *highlight;
+    Highlight *highlight;
     qreal pixelScale; //intended to scale for HDPI monitor. Not certain it is correct.
     GoBoard(QWidget *parent);
     ~GoBoard();
+
+    qreal opacity;
+    void setOpacity(qreal opa){opacity = opa;}
+    qreal getOpacity(){return opacity;}
+    Q_PROPERTY(qreal opacity READ getOpacity WRITE setOpacity)
+
     bool isOnBoard(qreal i, qreal j);
     bool isOnBoard(QPointF j);
     enum MarkerMarks{

@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     readSettings();
 
     engine.addProgramArg("--mode gtp");
+    engine.addProgramArg("--level 1");
     engine.start();
     gtp.setEngine(engine);
     ui->labelBlack->setStyleSheet("#labelBlack { color:#000000; background: #785229;}");
