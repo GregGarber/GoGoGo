@@ -295,14 +295,37 @@ void GoBoard::showTopMoves(const QString color, QStringList verticies){
         tmp=line.split(" ", QString::SkipEmptyParts);
         vertex = tmp.at(0);
         score = tmp.at(1);
-        font.setPixelSize((int)((float)gridSizePixels/(float)score.length())*2);
+        qreal fScore = score.toDouble();
+        QString sScore =QString("%1").arg(fScore,0,'f',1);
+        //font.setPixelSize((int)((float)gridSizePixels/(float)score.length())*2);
+        font.setPixelSize((int)((float)gridSizePixels/(float)sScore.length())*2);
         pt = alphaNumToPos(vertex);
-        QGraphicsSimpleTextItem *tx = scene->addSimpleText(score, font);
+        //QGraphicsSimpleTextItem *tx = scene->addSimpleText(score, font);
+        QGraphicsSimpleTextItem *tx = scene->addSimpleText(sScore, font);
+        tx->setData(0,"marker_text");
+        tx->setData(1,i);
+
+
+
         tx->setBrush(QColor(Qt::white));
         center(tx, pt);
-        QGraphicsRectItem *el = scene->addRect(tx->sceneBoundingRect(),pen,brush);
+        QRectF txt_outline = tx->sceneBoundingRect();
+        QGraphicsRectItem *el = scene->addRect(txt_outline,pen,brush);
+        el->setData(0,"marker_box");
+        el->setData(1,i);
+
         QGraphicsTextItem *tx2 = scene->addText(line.replace(" ","\t") , big_font);
         tx2->setPos(1100.0, i*30.0);
+
+
+    for(int j=0; j<verticies.length(); j++){
+        QPointF op = alphaNumToPos(verticies.at(j));
+        op.setX( op.rx() - (gridSizePixels*.6));
+        if(el->contains(op)){
+            tx->setPen(QPen(QColor(randy(255,64), randy(255,64), randy(255,64), 255), randy(3,1) ));
+        }
+        }
+
         el->setToolTip(line);
         gig->addToGroup(el);
         gig->addToGroup(tx);
@@ -423,38 +446,12 @@ void GoBoard::placeStone( QString color, QString location){
         a->start(QPropertyAnimation::DeleteWhenStopped);
         }
 
-        //center(highlight);
-        // highlight isn't centered, something to do with pen width
         // need sound of stones hitting board
         // can hint labels be rotated? different text colors?
         //might be nice to go whole hog with animating stones
         // need stars
         //highlight top hint
         //looks like it can only one effect at a time
-        //QGraphicsBlurEffect *blur = new QGraphicsBlurEffect(this);
-        //highlight->setGraphicsEffect(blur);
-
-/*
-        goe = new QGraphicsOpacityEffect(this);
-        highlight->setGraphicsEffect(goe);
-        QPropertyAnimation *a = new QPropertyAnimation(goe,"opacity");
-        a->setDuration(8000);
-        a->setStartValue(1);
-        a->setEndValue(0);
-        a->setEasingCurve(QEasingCurve::OutBack);
-        a->start(QPropertyAnimation::DeleteWhenStopped);
-        */
-        //}
-
-        /*
-        QPropertyAnimation *b = new QPropertyAnimation(highlight,"geometry");
-        b->setDuration(10000);
-        //b->setStartValue(QRect(0, 0, 100, 30));
-        b->setStartValue(highlight->boundingRect());
-        b->setEndValue(QRect(250, 250, 100, 30));
-        QSequentialAnimationGroup *gr = new QSequentialAnimationGroup;
-        */
-
 
         stone.stone = new_stone;
         if(hasStone(location)) removeStone(location);//can only be one stone per location. NO, should return invalid move or something
