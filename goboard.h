@@ -10,7 +10,7 @@
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
 #include <QDebug>
-#include <QGraphicsOpacityEffect>
+#include <QSound>
 #include <map>
 
 #include "highlight.h"
@@ -23,17 +23,10 @@ class GoBoard: public QGraphicsView
 {
     Q_OBJECT
 public:
-    QGraphicsOpacityEffect *goe;
-    //QGraphicsEllipseItem *highlight;
     Highlight *highlight;
     qreal pixelScale; //intended to scale for HDPI monitor. Not certain it is correct.
     GoBoard(QWidget *parent);
     ~GoBoard();
-
-    qreal opacity;
-    void setOpacity(qreal opa){opacity = opa;}
-    qreal getOpacity(){return opacity;}
-    Q_PROPERTY(qreal opacity READ getOpacity WRITE setOpacity)
 
     bool isOnBoard(qreal i, qreal j);
     bool isOnBoard(QPointF j);
@@ -62,11 +55,16 @@ public:
     void removeMarkers(QString name);
     void readSettings();
 
+    //Unfortunately, these won't compensate for pen width because pixmaps don't have pens.
+    //Why pen width isn't included is a mystery to me. So is the lack of constructors that
+    //would place symmetrical objects by their centres.
     template <class T> void center(T* item){
         item->setPos( item->pos().rx()-(item->sceneBoundingRect().width()/2.0), item->pos().ry()-(item->sceneBoundingRect().height()/2.0));
     }
     template <class T> void center(T* item, QPointF p){
-        item->setPos( p.rx()-(item->sceneBoundingRect().width()/2.0), p.ry()-(item->sceneBoundingRect().height()/2.0));
+        item->setPos( p.rx()-(item->sceneBoundingRect().width()/2.0),
+                      p.ry()-(item->sceneBoundingRect().height()/2.0)
+                      );
     }
     template <class T> void center(T* item, qreal x, qreal y){
         item->setPos( x-(item->sceneBoundingRect().width()/2.0), y-(item->sceneBoundingRect().height()/2.0));

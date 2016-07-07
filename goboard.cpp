@@ -352,9 +352,9 @@ void GoBoard::drawBoard(){
     QFont font =QFont("Arial", 15*pixelScale, 9 );
     QGraphicsTextItem *txt;
     font.setBold(true);
+    qreal max = GO_GRID_SIZE - (qreal)gridSizePixels;
     for(qreal i=0.0; i < boardSize; i+=1.0){
         qreal p = i * (qreal)gridSizePixels;
-        qreal max = GO_GRID_SIZE - (qreal)gridSizePixels;
         scene->addLine(0, p,  max, p, pen);
         scene->addLine(p, 0,p, max, pen);
         s=QString("%1").arg(boardSize - i);
@@ -372,6 +372,15 @@ void GoBoard::drawBoard(){
         center(txt, p, max+50);
         txt = scene->addText(s, font);
         center(txt, p, -50);
+    }
+    pen.setWidth(10);
+    scene->addRect(0,0,max,max,pen);
+    QStringList stars={"D16", "K16", "Q16", "D10", "K10", "Q10", "D4", "K4", "Q4"};
+    qreal sdia = (qreal)gridSizePixels/2.0;
+    pen.setWidth(0);
+    for(int i=0;i<stars.length();i++){
+        QGraphicsEllipseItem *star= scene->addEllipse(0,0,sdia,sdia,pen,brush);
+        center(star, alphaNumToPos(stars.at(i)));
     }
 }
 
@@ -427,6 +436,9 @@ void GoBoard::placeStone( QString color, QString location){
                           .arg(( (uint)stoneHouse.size() +1) ) );
                           */
     if(stone.color != Blank){
+        //@TODO find definately open-source sounds. Not sure I can add this
+        //one to Git. Does add something to playing.
+        QSound::play("stone.wav");
         new_stone->setScale( ((qreal)gridSizePixels/(qreal)new_stone->sceneBoundingRect().width() ));
         QPointF p = alphaNumToPos(location);
         new_stone->setPos(p);
@@ -442,12 +454,9 @@ void GoBoard::placeStone( QString color, QString location){
         a->setStartValue(0.0);
         a->setEndValue(5.0); //do the physics in seconds
         highlight->setTotalTime(5.0);//sometimes need to know this
-        //a->setEasingCurve(QEasingCurve::OutBack);
         a->start(QPropertyAnimation::DeleteWhenStopped);
         }
 
-        // need sound of stones hitting board
-        // can hint labels be rotated? different text colors?
         //might be nice to go whole hog with animating stones
         // need stars
         //highlight top hint
